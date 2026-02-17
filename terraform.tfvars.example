@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and fill in your values
+# terraform.tfvars is gitignored
+
+hcloud_token     = "your-hetzner-api-token"
+domain           = "example.com"
+route53_zone_id  = "Z1234567890ABC"
+subdomain_prefix = ""  # e.g., "lab" → git.lab.example.com, or "" for git.example.com
+
+# Optional overrides
+# server_type     = "cax31"
+# server_location = "ash"
+# aws_region      = "us-east-1"
