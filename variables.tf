@@ -29,12 +29,6 @@ variable "domain" {
   type        = string
 }
 
-variable "subdomain_prefix" {
-  description = "Prefix for service subdomains (e.g., 'lab' gives git.lab.example.com)"
-  type        = string
-  default     = ""
-}
-
 variable "route53_zone_id" {
   description = "Route 53 hosted zone ID for the domain"
   type        = string
@@ -49,27 +43,25 @@ variable "aws_region" {
 
 # --- Coolify ---
 variable "coolify_fqdn" {
-  description = "FQDN for Coolify dashboard (auto-generated if empty)"
+  description = "FQDN for Coolify dashboard"
   type        = string
-  default     = ""
+  default     = "deploy.matz.io"
 }
 
 variable "forgejo_fqdn" {
-  description = "FQDN for Forgejo (auto-generated if empty)"
+  description = "FQDN for Forgejo"
   type        = string
-  default     = ""
+  default     = "dev.matz.io"
 }
 
-# --- SSH ---
-variable "ssh_public_key_path" {
-  description = "Path to SSH public key for server access"
+variable "apps_wildcard" {
+  description = "Wildcard domain for deployed apps"
   type        = string
-  default     = "~/.ssh/id_ed25519.pub"
+  default     = "*.app.matz.io"
 }
 
 locals {
-  base_domain  = var.subdomain_prefix != "" ? "${var.subdomain_prefix}.${var.domain}" : var.domain
-  coolify_fqdn = var.coolify_fqdn != "" ? var.coolify_fqdn : "coolify.${local.base_domain}"
-  forgejo_fqdn = var.forgejo_fqdn != "" ? var.forgejo_fqdn : "git.${local.base_domain}"
-  apps_fqdn    = "*.apps.${local.base_domain}"
+  coolify_fqdn = var.coolify_fqdn
+  forgejo_fqdn = var.forgejo_fqdn
+  apps_fqdn    = var.apps_wildcard
 }

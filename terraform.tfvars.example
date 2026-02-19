@@ -1,10 +1,14 @@
 # Copy to terraform.tfvars and fill in your values
 # terraform.tfvars is gitignored
 
-hcloud_token     = "your-hetzner-api-token"
-domain           = "example.com"
-route53_zone_id  = "Z1234567890ABC"
-subdomain_prefix = ""  # e.g., "lab" → git.lab.example.com, or "" for git.example.com
+hcloud_token    = "your-hetzner-api-token"
+domain          = "matz.io"
+route53_zone_id = "Z1234567890ABC"
+
+# Subdomains (defaults shown)
+# coolify_fqdn  = "deploy.matz.io"
+# forgejo_fqdn  = "dev.matz.io"
+# apps_wildcard  = "*.app.matz.io"
 
 # Optional overrides
 # server_type     = "cax31"
