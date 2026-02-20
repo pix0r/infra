@@ -1,4 +1,4 @@
-# Copy to terraform.tfvars and fill in your values
+# Copy to stacks/hetzner-primary/terraform.tfvars and fill in your values
 # terraform.tfvars is gitignored
 
 hcloud_token    = "your-hetzner-api-token"
@@ -7,8 +7,8 @@ route53_zone_id = "Z1234567890ABC"
 aws_profile     = "your-aws-profile-name"
 
 # Subdomains (defaults shown)
-# coolify_fqdn  = "deploy.matz.io"
-# forgejo_fqdn  = "dev.matz.io"
+# coolify_fqdn   = "deploy.matz.io"
+# forgejo_fqdn   = "dev.matz.io"
 # apps_wildcard  = "*.app.matz.io"
 
 # Optional overrides

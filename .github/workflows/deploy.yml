@@ -1,0 +1,62 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Apply changes in changed stacks
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: us-east-1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Terramate
+        uses: terramate-io/terramate-action@v3
+
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_wrapper: false
+
+      - name: Generate Terramate code
+        run: terramate generate
+
+      - name: List changed stacks
+        id: list
+        run: terramate list --changed
+
+      - name: Initialize OpenTofu in changed stacks
+        if: steps.list.outputs.stdout
+        run: |
+          terramate run \
+            --changed \
+            -- \
+            tofu init -lock-timeout=5m
+
+      - name: Apply changes in changed stacks
+        if: steps.list.outputs.stdout
+        run: |
+          terramate run \
+            --changed \
+            -- \
+            tofu apply -auto-approve -lock-timeout=5m \
+              -var="hcloud_token=$HCLOUD_TOKEN" \
+              -var="aws_profile=" \
+              -var="route53_zone_id=$ROUTE53_ZONE_ID" \
+              -var="domain=matz.io"
+        env:
+          ROUTE53_ZONE_ID: ${{ secrets.ROUTE53_ZONE_ID }}
