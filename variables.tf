@@ -41,6 +41,11 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_profile" {
+  description = "AWS credentials profile name from ~/.aws/credentials"
+  type        = string
+}
+
 # --- Coolify ---
 variable "coolify_fqdn" {
   description = "FQDN for Coolify dashboard"

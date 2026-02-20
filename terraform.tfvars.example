@@ -4,6 +4,7 @@
 hcloud_token    = "your-hetzner-api-token"
 domain          = "matz.io"
 route53_zone_id = "Z1234567890ABC"
+aws_profile     = "your-aws-profile-name"
 
 # Subdomains (defaults shown)
 # coolify_fqdn  = "deploy.matz.io"
