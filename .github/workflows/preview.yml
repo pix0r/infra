@@ -28,10 +28,13 @@ jobs:
 
       - name: Install Terramate
         uses: terramate-io/terramate-action@v3
+        with:
+          version: detect
 
       - name: Install OpenTofu
         uses: opentofu/setup-opentofu@v1
         with:
+          tofu_version: detect
           tofu_wrapper: false
 
       - name: Check Terramate formatting
