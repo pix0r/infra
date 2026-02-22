@@ -1,7 +1,7 @@
 terraform {
   required_version = ">= 1.6.0"
 
-  # This stack uses local backend (bootstrapping — can't use the bucket it creates)
+  # This stack uses local state — it bootstraps the remote backend
   backend "local" {}
 
   required_providers {
@@ -30,10 +30,18 @@ variable "bucket_name" {
   default     = "matz-infra-tfstate"
 }
 
+variable "project_name" {
+  description = "Project name prefix for IAM resources"
+  type        = string
+  default     = "matz-infra"
+}
+
 provider "aws" {
   region  = var.aws_region
   profile = var.aws_profile != "" ? var.aws_profile : null
 }
+
+# --- S3 State Bucket ---
 
 resource "aws_s3_bucket" "tfstate" {
   bucket = var.bucket_name
@@ -70,21 +78,97 @@ resource "aws_s3_bucket_public_access_block" "tfstate" {
   restrict_public_buckets = true
 }
 
-resource "aws_dynamodb_table" "tflock" {
-  name         = "${var.bucket_name}-lock"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
+# --- IAM User for Tofu (CI + local) ---
+# Single user with Route53 + S3 state permissions
 
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
+resource "aws_iam_user" "tofu" {
+  name = "${var.project_name}-tofu"
 }
+
+resource "aws_iam_user_policy" "tofu" {
+  name = "${var.project_name}-tofu-policy"
+  user = aws_iam_user.tofu.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "Route53"
+        Effect = "Allow"
+        Action = [
+          "route53:GetHostedZone",
+          "route53:ListHostedZones",
+          "route53:ChangeResourceRecordSets",
+          "route53:GetChange",
+          "route53:ListResourceRecordSets",
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "S3StateBucket"
+        Effect = "Allow"
+        Action = "s3:ListBucket"
+        Resource = "arn:aws:s3:::${var.bucket_name}"
+      },
+      {
+        Sid    = "S3StateObjects"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:PutObjectTagging",
+        ]
+        Resource = "arn:aws:s3:::${var.bucket_name}/*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_access_key" "tofu" {
+  user = aws_iam_user.tofu.name
+}
+
+# --- Outputs ---
 
 output "bucket_name" {
   value = aws_s3_bucket.tfstate.bucket
 }
 
-output "dynamodb_table" {
-  value = aws_dynamodb_table.tflock.name
+output "iam_user" {
+  value = aws_iam_user.tofu.name
+}
+
+output "access_key_id" {
+  value     = aws_iam_access_key.tofu.id
+  sensitive = true
+}
+
+output "secret_access_key" {
+  value     = aws_iam_access_key.tofu.secret
+  sensitive = true
+}
+
+output "next_steps" {
+  value = <<-EOT
+
+    ✅ Bootstrap complete! Next steps:
+
+    1. Get your new credentials:
+       tofu output -raw access_key_id
+       tofu output -raw secret_access_key
+
+    2. Add to ~/.aws/credentials:
+       [matz-infra]
+       aws_access_key_id = <from above>
+       aws_secret_access_key = <from above>
+
+    3. Add GitHub repo secrets (Settings → Secrets → Actions):
+       AWS_ACCESS_KEY_ID      = <from above>
+       AWS_SECRET_ACCESS_KEY  = <from above>
+       ROUTE53_ZONE_ID        = <your zone id>
+       HCLOUD_TOKEN           = <your hetzner token>
+
+    4. You can now delete your old tofu-route53 IAM user — this one replaces it.
+  EOT
 }
