@@ -7,3 +7,8 @@ terraform.tfvars
 *.otplan
 .ssh/
 _terramate_generated_*
+
+# Decrypted working copies — never commit plaintext secrets.
+# The example template (unencrypted, no real values) IS committed.
+secrets/*.env.plain
+secrets/*.dec

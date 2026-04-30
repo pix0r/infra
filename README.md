@@ -20,6 +20,7 @@ stacks/
 
 - [OpenTofu](https://opentofu.org/docs/intro/install/)
 - [Terramate CLI](https://terramate.io/docs/cli/installation)
+- [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age) for secrets
 - Hetzner Cloud API token
 - AWS account with an admin/root user (for bootstrap only)
 
@@ -54,21 +55,55 @@ EOF
 
 After bootstrap, all infrastructure changes go through PRs.
 
+## Secrets (single source: SOPS-encrypted file in repo)
+
+All sensitive values live in `secrets/terraform.env`, encrypted with [SOPS](https://github.com/getsops/sops) + [age](https://github.com/FiloSottile/age). The same encrypted file is consumed by both:
+
+- **GitHub Actions** — decrypts using `SOPS_AGE_KEY` (the age private key, stored once as a repo secret) and exports values as env vars for Tofu
+- **Local fast loop** — `sops exec-env` decrypts in memory and runs Tofu under the decrypted env
+
+This means: **add or rotate a secret once via `sops`, both paths see the change**. No drift.
+
+### One-time setup (operator)
+
+```bash
+# 1. Copy the template, fill in real values
+cp secrets/terraform.env.example secrets/terraform.env
+$EDITOR secrets/terraform.env  # paste real HCLOUD_TOKEN, AWS_*, ROUTE53_ZONE_ID
+
+# 2. Encrypt in place
+sops -e -i secrets/terraform.env
+
+# 3. Commit + push the encrypted file (it's safe in git)
+git add secrets/terraform.env
+git commit -m "secrets: initial encrypted terraform.env"
+
+# 4. Drop the age key into GitHub Actions (one-time per repo)
+cat ~/.config/sops/age/keys.txt | gh secret set SOPS_AGE_KEY -R pix0r/infra
+# (or wherever your age private key lives)
+```
+
+### Editing later
+
+```bash
+sops secrets/terraform.env   # opens decrypted in $EDITOR; re-encrypts on save
+git add secrets/terraform.env && git commit -m "secrets: rotate HCLOUD_TOKEN"
+```
+
 ## CI/CD
 
-- **PR opened** → `preview.yml` runs `tofu plan` on changed stacks, comments on PR
-- **PR merged to main** → `deploy.yml` runs `tofu apply` on changed stacks
+- **PR opened** → `preview.yml` decrypts secrets, runs `tofu plan` on changed stacks, comments plan on PR
+- **PR merged to main** → `deploy.yml` decrypts secrets, runs `tofu apply` on changed stacks
 
 State locking uses native S3 conditional writes (`use_lockfile = true`), no DynamoDB needed.
 
-### Required GitHub Secrets
+### Required GitHub Secret
 
 | Secret | Description |
 |---|---|
-| `HCLOUD_TOKEN` | Hetzner Cloud API token |
-| `AWS_ACCESS_KEY_ID` | From bootstrap output |
-| `AWS_SECRET_ACCESS_KEY` | From bootstrap output |
-| `ROUTE53_ZONE_ID` | Route 53 hosted zone ID for matz.io |
+| `SOPS_AGE_KEY` | age private key — decrypts `secrets/terraform.env` |
+
+(Previously: `HCLOUD_TOKEN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `ROUTE53_ZONE_ID` were individual repo secrets. Those are now superseded by the single SOPS-encrypted file. **Delete them** from repo settings after this PR merges.)
 
 ### Branch Protection
 
@@ -76,12 +111,30 @@ State locking uses native S3 conditional writes (`use_lockfile = true`), no Dyna
 
 ## Local Development
 
+Plan and apply locally without going through GHA — same secrets file:
+
 ```bash
-# Use the matz-infra AWS profile for local runs
 cd stacks/hetzner-primary
 tofu init
-tofu plan -var="aws_profile=matz-infra" -var="hcloud_token=..." -var="route53_zone_id=..." -var="domain=matz.io"
+
+# Plan — sops exec-env decrypts in memory and exports as env vars
+sops exec-env ../../secrets/terraform.env \
+  'tofu plan \
+     -var="hcloud_token=$HCLOUD_TOKEN" \
+     -var="aws_profile=" \
+     -var="route53_zone_id=$ROUTE53_ZONE_ID" \
+     -var="domain=matz.io"'
+
+# Apply
+sops exec-env ../../secrets/terraform.env \
+  'tofu apply \
+     -var="hcloud_token=$HCLOUD_TOKEN" \
+     -var="aws_profile=" \
+     -var="route53_zone_id=$ROUTE53_ZONE_ID" \
+     -var="domain=matz.io"'
 ```
+
+This lets you iterate fast on the laptop without internet to GitHub between steps. When ready, push your branch and let the GHA flow handle the actual production apply (the audit trail is the merged PR + the deploy.yml run logs).
 
 ## Cost
 
