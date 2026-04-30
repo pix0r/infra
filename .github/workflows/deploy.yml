@@ -1,0 +1,78 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Apply changes in changed stacks
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      AWS_REGION: us-east-1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install SOPS
+        uses: nhedger/setup-sops@v2
+        with:
+          version: 3.10.2
+
+      - name: Decrypt secrets and export to environment
+        run: |
+          umask 077
+          echo "${{ secrets.SOPS_AGE_KEY }}" > /tmp/age.key
+          export SOPS_AGE_KEY_FILE=/tmp/age.key
+          sops -d --output-type=dotenv secrets/terraform.env > /tmp/decrypted.env
+          while IFS='=' read -r key value; do
+            [[ -z "$key" || "$key" == \#* ]] && continue
+            echo "::add-mask::$value"
+            echo "$key=$value" >> "$GITHUB_ENV"
+          done < /tmp/decrypted.env
+          rm -f /tmp/decrypted.env /tmp/age.key
+
+      - name: Install Terramate
+        uses: terramate-io/terramate-action@v3
+        with:
+          version: detect
+
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: detect
+          tofu_wrapper: false
+
+      - name: Generate Terramate code
+        run: terramate generate
+
+      - name: List changed stacks
+        id: list
+        run: terramate list --changed
+
+      - name: Initialize OpenTofu in changed stacks
+        if: steps.list.outputs.stdout
+        run: |
+          terramate run \
+            --changed \
+            -- \
+            tofu init -lock-timeout=5m
+
+      - name: Apply changes in changed stacks
+        if: steps.list.outputs.stdout
+        run: |
+          terramate run \
+            --changed \
+            -- \
+            tofu apply -auto-approve -lock-timeout=5m \
+              -var="hcloud_token=$HCLOUD_TOKEN" \
+              -var="aws_profile=" \
+              -var="route53_zone_id=$ROUTE53_ZONE_ID" \
+              -var="domain=matz.io"
