@@ -1,0 +1,11 @@
+# .envrc.example — copy to .envrc, customize, then `direnv allow`
+# .envrc itself is gitignored (per-machine state).
+#
+# Required: path to your age private key for SOPS decryption.
+# Every sops command in this repo (sops -e / -d / exec-env) reads this
+# automatically once direnv has loaded the env. No need to wrap with `assist`
+# or pass the path on every invocation.
+#
+# Example (substitute your actual path):
+#   export SOPS_AGE_KEY_FILE="$HOME/code/_FY/assistant/linode-setup/secrets/age-key.txt"
+export SOPS_AGE_KEY_FILE=/path/to/your/age-key.txt

@@ -12,3 +12,6 @@ _terramate_generated_*
 # The example template (unencrypted, no real values) IS committed.
 secrets/*.env.plain
 secrets/*.dec
+
+# Local per-machine env (direnv); .envrc.example is committed as a template
+.envrc
