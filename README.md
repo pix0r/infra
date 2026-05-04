@@ -111,6 +111,16 @@ State locking uses native S3 conditional writes (`use_lockfile = true`), no Dyna
 
 ## Local Development
 
+**First-time setup**: copy the env template and tell `direnv` where your age private key lives:
+
+```bash
+cp .envrc.example .envrc
+$EDITOR .envrc                 # set SOPS_AGE_KEY_FILE to your real path
+direnv allow
+```
+
+`.envrc` is gitignored — it's per-machine state. After this, plain `sops` commands work in this repo without wrapping in `assist` or passing the key path each time.
+
 Plan and apply locally without going through GHA — same secrets file:
 
 ```bash
