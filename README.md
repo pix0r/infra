@@ -128,9 +128,11 @@ The SOPS file holds everything Terraform needs (AWS scoped creds + `TF_VAR_*` fo
 ```bash
 cd stacks/hetzner-primary
 tofu init
-sops exec-env ../../secrets/terraform.env tofu plan
-sops exec-env ../../secrets/terraform.env tofu apply
+sops exec-env ../../secrets/terraform.env 'tofu plan'
+sops exec-env ../../secrets/terraform.env 'tofu apply'
 ```
+
+**Note**: the command after the env file must be a single-quoted string — `sops exec-env` only takes two positional args (the file and the command). Bare `sops exec-env file tofu plan` would have SOPS try to decrypt `plan` as a second file and fail with `missing file to decrypt`. Wrap any multi-word command (with or without flags) in quotes.
 
 `sops exec-env` decrypts in memory, exports the env vars, runs the wrapped command, and discards the decrypted env on exit. Same encrypted file the GHA workflows use — no drift between local and CI.
 
