@@ -121,30 +121,35 @@ direnv allow
 
 `.envrc` is gitignored — it's per-machine state. After this, plain `sops` commands work in this repo without wrapping in `assist` or passing the key path each time.
 
-Plan and apply locally without going through GHA — same secrets file:
+### Day-to-day: plan + apply against any stack
+
+The SOPS file holds everything Terraform needs (AWS scoped creds + `TF_VAR_*` for hcloud/route53/domain). One command per operation, no `-var=` clutter:
 
 ```bash
 cd stacks/hetzner-primary
 tofu init
-
-# Plan — sops exec-env decrypts in memory and exports as env vars
-sops exec-env ../../secrets/terraform.env \
-  'tofu plan \
-     -var="hcloud_token=$HCLOUD_TOKEN" \
-     -var="aws_profile=" \
-     -var="route53_zone_id=$ROUTE53_ZONE_ID" \
-     -var="domain=matz.io"'
-
-# Apply
-sops exec-env ../../secrets/terraform.env \
-  'tofu apply \
-     -var="hcloud_token=$HCLOUD_TOKEN" \
-     -var="aws_profile=" \
-     -var="route53_zone_id=$ROUTE53_ZONE_ID" \
-     -var="domain=matz.io"'
+sops exec-env ../../secrets/terraform.env tofu plan
+sops exec-env ../../secrets/terraform.env tofu apply
 ```
 
-This lets you iterate fast on the laptop without internet to GitHub between steps. When ready, push your branch and let the GHA flow handle the actual production apply (the audit trail is the merged PR + the deploy.yml run logs).
+`sops exec-env` decrypts in memory, exports the env vars, runs the wrapped command, and discards the decrypted env on exit. Same encrypted file the GHA workflows use — no drift between local and CI.
+
+### Bootstrap is different
+
+The `tfstate-backend` stack is a one-time setup that creates the IAM user whose creds end up *in* the SOPS file. By definition, those creds don't exist when bootstrap runs. So bootstrap uses your **interactive admin identity** (e.g., AWS SSO via Identity Center) instead of the SOPS file:
+
+```bash
+aws sso login --profile <your-admin-profile>
+export AWS_PROFILE=<your-admin-profile>
+cd stacks/tfstate-backend
+tofu init
+tofu apply
+# Capture outputs:
+tofu output -raw access_key_id        # → AWS_ACCESS_KEY_ID for SOPS
+tofu output -raw secret_access_key    # → AWS_SECRET_ACCESS_KEY for SOPS
+```
+
+Then add those values to `secrets/terraform.env`, encrypt with `sops -e -i`, commit, push. From then on, every other operation uses the simple `sops exec-env` pattern above.
 
 ## Cost
 
