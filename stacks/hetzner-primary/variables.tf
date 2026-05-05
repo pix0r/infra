@@ -42,8 +42,9 @@ variable "aws_region" {
 }
 
 variable "aws_profile" {
-  description = "AWS credentials profile name from ~/.aws/credentials"
+  description = "AWS credentials profile name from ~/.aws/credentials. Leave empty to use env vars (AWS_ACCESS_KEY_ID/SECRET) — the provider falls back to standard SDK credential resolution."
   type        = string
+  default     = ""
 }
 
 # --- Coolify ---
