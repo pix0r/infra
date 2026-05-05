@@ -42,12 +42,12 @@ jobs:
       - name: Install Terramate
         uses: terramate-io/terramate-action@v3
         with:
-          version: detect
+          version: 0.14.0
 
       - name: Install OpenTofu
         uses: opentofu/setup-opentofu@v1
         with:
-          tofu_version: detect
+          tofu_version: 1.9.0
           tofu_wrapper: false
 
       - name: Generate Terramate code
