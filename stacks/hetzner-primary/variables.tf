@@ -47,27 +47,27 @@ variable "aws_profile" {
   default     = ""
 }
 
-# --- Coolify ---
-variable "coolify_fqdn" {
-  description = "FQDN for Coolify dashboard"
-  type        = string
-  default     = "deploy.matz.io"
-}
-
-variable "forgejo_fqdn" {
-  description = "FQDN for Forgejo"
-  type        = string
-  default     = "dev.matz.io"
-}
-
+# --- App domains ---
 variable "apps_wildcard" {
-  description = "Wildcard domain for deployed apps"
+  description = "Wildcard domain for deployed apps (also covers app.matz.io for orchestrator admin UI)"
   type        = string
   default     = "*.app.matz.io"
 }
 
+variable "share_fqdn" {
+  description = "FQDN for the publish-slice (separate auth posture from apps.*). TENTATIVE — may unify with share.pixor.net in Sprint 4."
+  type        = string
+  default     = "share.matz.io"
+}
+
+# --- Flux GitOps ---
+variable "flux_github_pat" {
+  description = "GitHub PAT for Flux bootstrap. Needs `repo` scope on pix0r/infra (read+write so Flux can commit its bootstrap manifests). Optionally read on pix0r/brain-orchestrator for the chart."
+  type        = string
+  sensitive   = true
+}
+
 locals {
-  coolify_fqdn = var.coolify_fqdn
-  forgejo_fqdn = var.forgejo_fqdn
-  apps_fqdn    = var.apps_wildcard
+  apps_fqdn  = var.apps_wildcard
+  share_fqdn = var.share_fqdn
 }

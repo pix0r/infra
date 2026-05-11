@@ -32,37 +32,6 @@ write_files:
       maxretry = 3
       bantime = 3600
 
-  # Forgejo docker-compose
-  - path: /opt/forgejo/docker-compose.yaml
-    content: |
-      services:
-        forgejo:
-          image: codeberg.org/forgejo/forgejo:9
-          container_name: forgejo
-          restart: always
-          environment:
-            - USER_UID=1000
-            - USER_GID=1000
-            - FORGEJO__server__ROOT_URL=https://${forgejo_fqdn}
-            - FORGEJO__server__SSH_DOMAIN=${forgejo_fqdn}
-            - FORGEJO__server__HTTP_PORT=3000
-            - FORGEJO__service__DISABLE_REGISTRATION=true
-          volumes:
-            - forgejo-data:/data
-            - /etc/timezone:/etc/timezone:ro
-            - /etc/localtime:/etc/localtime:ro
-          ports:
-            - "3000:3000"
-            - "2222:22"
-          networks:
-            - forgejo
-
-      volumes:
-        forgejo-data:
-
-      networks:
-        forgejo:
-
 runcmd:
   # Enable fail2ban
   - systemctl enable fail2ban
@@ -71,14 +40,29 @@ runcmd:
   # Enable unattended upgrades
   - dpkg-reconfigure -f noninteractive unattended-upgrades
 
-  # Install Docker via official script
+  # Install Docker via official script (kept for ad-hoc container work; k3s uses containerd)
   - curl -fsSL https://get.docker.com | sh
 
-  # Start Forgejo
-  - cd /opt/forgejo && docker compose up -d
+  # Install k3s (single-node, server). Pin a specific channel to avoid surprise upgrades.
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=stable INSTALL_K3S_VERSION=v1.31.4+k3s1 sh -
 
-  # Install Coolify (their official installer)
-  - curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
+  # Make kubeconfig usable for root
+  - mkdir -p /root/.kube
+  - cp /etc/rancher/k3s/k3s.yaml /root/.kube/config
+  - chmod 600 /root/.kube/config
+
+  # Install flux CLI
+  - curl -s https://fluxcd.io/install.sh | bash
+
+  # Install kubectl + helm + k9s for ergonomics
+  - snap install kubectl --classic
+  - snap install helm --classic
+  - snap install k9s
+
+  # Bootstrap Flux against pix0r/infra. The PAT is template-substituted by Terraform
+  # from var.flux_github_pat (sourced from SOPS-encrypted secrets/terraform.env).
+  - export GITHUB_TOKEN=${flux_github_pat}
+  - flux bootstrap github --owner=pix0r --repository=infra --path=clusters/primary --personal --branch=main --token-auth
 
   # Restart SSH with hardened config
   - systemctl restart sshd
