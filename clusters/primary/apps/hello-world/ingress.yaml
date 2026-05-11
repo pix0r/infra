@@ -1,0 +1,26 @@
+# app.matz.io — Sprint 1 placeholder served by hello-world.
+# Sprint 2 replaces this with the brain-orchestrator HelmRelease.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-world
+  namespace: hello-world
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: app.matz.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hello-world
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - app.matz.io
+      secretName: app-matz-io-tls

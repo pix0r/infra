@@ -1,20 +1,35 @@
 # infra
 
 IaC for personal infrastructure on Hetzner Cloud, managed with Terramate + OpenTofu.
+The workload layer is k3s + FluxCD; cluster state lives under `clusters/primary/`.
 
 ## Architecture
 
 ```
 stacks/
 ├── tfstate-backend/     # S3 bucket + IAM user (bootstrap first, local state)
-└── hetzner-primary/     # Primary server: Coolify + Forgejo + apps
+└── hetzner-primary/     # CAX31 + cloud-init that installs k3s and bootstraps Flux
+
+clusters/primary/        # GitOps state — Flux reconciles this on the cluster
+├── flux-system/         # populated by `flux bootstrap` on first run
+├── infrastructure.yaml  # Flux Kustomizations: route53-creds → cert-manager → weave-gitops
+├── infrastructure/
+│   ├── cert-manager-route53-creds/  # SOPS-encrypted AWS IAM for DNS-01
+│   ├── cert-manager/                # HelmRelease + ClusterIssuer (LE prod, DNS-01)
+│   └── weave-gitops/                # Flux dashboard at weave.app.matz.io
+├── apps.yaml            # Flux Kustomization for apps/ (dependsOn cert-manager)
+└── apps/
+    └── hello-world/     # Sprint 1 placeholder at app.matz.io; replaced by orchestrator in Sprint 2
 ```
 
 | Service | URL |
 |---|---|
-| Forgejo (git) | `dev.matz.io` |
-| Coolify (deploy) | `deploy.matz.io` |
+| Orchestrator (Sprint 1: hello-world) | `app.matz.io` |
+| Weave GitOps dashboard | `weave.app.matz.io` |
+| Publish-slice (Sprint 4) | `share.matz.io` |
 | Apps (wildcard) | `*.app.matz.io` |
+
+See [`RUNBOOK.md`](./RUNBOOK.md) for the apply + cattle-drill sequence.
 
 ## Prerequisites
 

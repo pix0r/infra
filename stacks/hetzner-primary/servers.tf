@@ -14,7 +14,7 @@ resource "hcloud_server" "primary" {
   }
 
   user_data = templatefile("${path.module}/cloud-init/primary.yaml", {
-    forgejo_fqdn = local.forgejo_fqdn
+    flux_github_pat = var.flux_github_pat
   })
 
   public_net {

@@ -1,0 +1,20 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: weave-gitops
+  namespace: weave-gitops
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: weave-gitops
+      version: "4.0.x"
+      sourceRef:
+        kind: HelmRepository
+        name: weave-gitops
+        namespace: flux-system
+      interval: 1h
+  values:
+    adminUser:
+      create: false
+      username: admin
