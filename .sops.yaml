@@ -1,3 +1,8 @@
 creation_rules:
   - path_regex: secrets/.*\.env$
     age: age14u43hzd40x4dn6ggezflxeaqfuqygv9dv744a6lhnhhap4tsk34se2fkmz
+  # Kubernetes Secrets committed to clusters/. Only data/stringData fields
+  # are encrypted so Kustomize/Flux can still read metadata (names, labels).
+  - path_regex: clusters/.*\.enc\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: age14u43hzd40x4dn6ggezflxeaqfuqygv9dv744a6lhnhhap4tsk34se2fkmz
