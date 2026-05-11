@@ -1,0 +1,26 @@
+# weave.app.matz.io — covered by the *.app.matz.io wildcard A record.
+# Auth is via the cluster-user-auth Secret (above). v1 only; harden in Sprint 2.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: weave-gitops
+  namespace: weave-gitops
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: weave.app.matz.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: weave-gitops
+                port:
+                  number: 9001
+  tls:
+    - hosts:
+        - weave.app.matz.io
+      secretName: weave-app-matz-io-tls

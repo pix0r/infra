@@ -1,0 +1,59 @@
+# Top-level Flux Kustomizations for the infrastructure layer.
+# Each points at a directory of plain Kustomize manifests under ./infrastructure/.
+# Ordering: route53-creds Secret -> cert-manager controller -> weave-gitops dashboard.
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-cert-manager-route53-creds
+  namespace: flux-system
+spec:
+  interval: 30m
+  retryInterval: 1m
+  timeout: 5m
+  path: ./clusters/primary/infrastructure/cert-manager-route53-creds
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age
+  wait: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-cert-manager
+  namespace: flux-system
+spec:
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  path: ./clusters/primary/infrastructure/cert-manager
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infra-cert-manager-route53-creds
+  wait: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-weave-gitops
+  namespace: flux-system
+spec:
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  path: ./clusters/primary/infrastructure/weave-gitops
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: infra-cert-manager
+  wait: true
