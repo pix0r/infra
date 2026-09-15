@@ -7,6 +7,9 @@ resource "terraform_data" "nixos_anywhere" {
 
   triggers_replace = [upcloud_server.dev_box[0].id]
 
+  # Port 22 must be open before the install step tries to reach the box.
+  depends_on = [upcloud_firewall_rules.dev_box]
+
   input = {
     ip = upcloud_server.dev_box[0].network_interface[0].ip_address
   }

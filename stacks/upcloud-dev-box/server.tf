@@ -5,8 +5,8 @@ resource "upcloud_server" "dev_box" {
   title    = var.hostname
   zone     = var.zone
   plan     = var.plan
-  metadata = true  # required for cloud-init user_data on current templates
-  firewall = false # NixOS nftables firewall is the one in charge (22 + mosh only)
+  metadata = true # required for cloud-init user_data on current templates
+  firewall = true # UpCloud requires it on trial accounts; rules in firewall.tf
 
   template {
     storage = var.template
