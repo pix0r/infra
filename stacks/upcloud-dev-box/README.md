@@ -41,6 +41,14 @@ reach the fresh template. On the box, after first SSH: `claude` login and
 3. Merge. Watch the deploy job: it prints the cloud-init log, then nixos-anywhere's
    progress, then the outputs (`ssh_command`).
 
+## Reaching it
+
+- Public name: **`dev.matz.io`** (Route 53 A record, TTL 60, follows the IP through
+  replacements). `ssh dev@dev.matz.io`. Add to `~/.ssh/config` on the laptop:
+  `Host dev` / `HostName dev.matz.io` / `User dev`.
+- Tailnet (once `hosts/dev-box` has Tailscale): `ssh dev@dev-box`, and the orchestrator
+  UI at `http://dev-box:4000` from any tailnet device, no SSH tunnel.
+
 ## Day to day
 
 - **Change the box:** edit `hosts/dev-box/configuration.nix`, PR (CI evaluates the

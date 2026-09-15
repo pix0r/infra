@@ -63,3 +63,27 @@ variable "nixos_anywhere_ref" {
   type        = string
   default     = "1.13.0"
 }
+
+# --- DNS ---
+variable "route53_zone_id" {
+  description = "Route 53 hosted zone for var.domain (TF_VAR_route53_zone_id from secrets/terraform.env)"
+  type        = string
+}
+
+variable "domain" {
+  description = "Zone apex (TF_VAR_domain from secrets/terraform.env)"
+  type        = string
+  default     = "matz.io"
+}
+
+variable "dns_name" {
+  description = "Host label for the box under var.domain. Empty string = no record."
+  type        = string
+  default     = "dev"
+}
+
+variable "aws_region" {
+  description = "Region for the AWS provider (Route 53 is global; this only satisfies the provider)"
+  type        = string
+  default     = "us-east-1"
+}
