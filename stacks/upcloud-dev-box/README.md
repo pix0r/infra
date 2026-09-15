@@ -1,6 +1,6 @@
 # upcloud-dev-box — NixOS box on UpCloud, deployed from git
 
-One server in **San Jose** (default plan `4xCPU-8GB`) plus a persistent 20 GB storage
+One server in **San Jose** (default plan `STARTER-4xCPU-8GB`, ~USD 26/mo) plus a persistent 20 GB storage
 at `/data`. The OS is **NixOS, declared in `hosts/dev-box/` at the repo root**.
 
 | Layer | Owned by | Change it by |
