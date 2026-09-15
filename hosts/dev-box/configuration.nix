@@ -89,7 +89,7 @@ in
 
   # ---- Tooling -------------------------------------------------------------------
   environment.systemPackages = with pkgs; [
-    git gh tmux mosh ripgrep jq htop neovim curl tree
+    git gh tmux mosh ripgrep jq htop neovim curl tree sqlite
     beam.erlang beam.elixir_1_18
     pkgs-unstable.claude-code
   ];
