@@ -1,0 +1,52 @@
+#cloud-config
+# Disposable Claude Code dev box. Rendered by stacks/dev-box/server.tf via templatefile().
+# Ubuntu 24.04. Non-root user `dev` (Claude Code refuses --dangerously-skip-permissions
+# as root), SSH keys pulled from GitHub, Docker + Node 22 + Claude Code + gh + tmux.
+#
+# Nothing from the laptop goes on this box. The only credentials it ever holds are
+# the Claude login and a repo-scoped GitHub token you add after first SSH.
+users:
+  - name: dev
+    groups: [sudo, docker]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_import_id: [gh:${github_user}]
+
+package_update: true
+package_upgrade: true
+packages:
+  - git
+  - tmux
+  - curl
+  - ca-certificates
+  - build-essential
+  - jq
+  - ripgrep
+  - fail2ban
+  - unattended-upgrades
+
+runcmd:
+  # Docker (official convenience script; pins nothing by design, this box is disposable)
+  - curl -fsSL https://get.docker.com | sh
+  - usermod -aG docker dev
+  # Node 22 + Claude Code
+  - curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  - apt-get install -y nodejs
+  - npm install -g @anthropic-ai/claude-code@${claude_code_version}
+  # GitHub CLI (for `gh auth login --with-token` + `gh auth setup-git` on the box)
+  - install -m 0755 -d /etc/apt/keyrings
+  - curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli-archive-keyring.gpg
+  - chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+  - apt-get update
+  - apt-get install -y gh
+  # SSH hardening
+  - sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config
+  - sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
+  - sed -i 's/^#\?MaxAuthTries .*/MaxAuthTries 3/' /etc/ssh/sshd_config
+  - systemctl restart ssh
+  - systemctl enable --now fail2ban
+  # Sentinel for "cloud-init finished"
+  - touch /home/dev/CLOUD-INIT-DONE && chown dev:dev /home/dev/CLOUD-INIT-DONE
+
+final_message: "dev-box ready after $UPTIME seconds"

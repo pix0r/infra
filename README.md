@@ -7,7 +7,8 @@ IaC for personal infrastructure on Hetzner Cloud, managed with Terramate + OpenT
 ```
 stacks/
 ├── tfstate-backend/     # S3 bucket + IAM user (bootstrap first, local state)
-└── hetzner-primary/     # Primary server: Coolify + Forgejo + apps
+├── hetzner-primary/     # Primary server: Coolify + Forgejo + apps
+└── dev-box/             # Disposable Claude Code box (SSH only, toggle via var.enabled)
 ```
 
 | Service | URL |
