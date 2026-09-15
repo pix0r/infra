@@ -18,7 +18,7 @@ variable "server_name" {
 }
 
 variable "server_type" {
-  description = "Hetzner server type. cpx31 = 4 vCPU / 8 GB x86, ~EUR 15/mo hourly-billed. Cheaper: cpx21 (3 vCPU / 4 GB). ARM (cax*) is not offered in ash."
+  description = "Hetzner server type. cpx31 = 4 vCPU / 8 GB x86, ~EUR 15/mo hourly-billed. Cheaper: cpx21 (3 vCPU / 4 GB). ARM (cax*) may not be offered in ash; the API rejects unavailable type/location pairs."
   type        = string
   default     = "cpx31"
 }

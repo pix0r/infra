@@ -98,5 +98,6 @@ Rotate the GitHub PAT you minted for the box.
 | **cpx31** (default) | 4 / 8 GB | 15 | Docker + orchestrator + a couple of sessions |
 | cpx41 | 8 / 16 GB | 28 | if Elixir builds in Docker get slow |
 
-x86 on purpose: `ash` has no ARM (cax) types, and it sidesteps any arm64 gaps in the
-orchestrator's Docker image.
+x86 on purpose: it sidesteps any arm64 gaps in the orchestrator's Docker image, and ARM
+(cax) availability in `ash` was not verified. The API rejects unavailable type/location
+pairs at plan time, so a wrong guess fails loudly, not silently.
