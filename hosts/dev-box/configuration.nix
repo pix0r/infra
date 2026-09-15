@@ -73,6 +73,7 @@ in
   };
   fileSystems."/var/lib/tailscale" = {
     device = "/data/tailscale";
+    fsType = "none";
     options = [ "bind" ];
     depends = [ "/data" ];
   };
