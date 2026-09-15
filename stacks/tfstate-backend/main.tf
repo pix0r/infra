@@ -105,9 +105,9 @@ resource "aws_iam_user_policy" "tofu" {
         Resource = "*"
       },
       {
-        Sid    = "S3StateBucket"
-        Effect = "Allow"
-        Action = "s3:ListBucket"
+        Sid      = "S3StateBucket"
+        Effect   = "Allow"
+        Action   = "s3:ListBucket"
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
       {
