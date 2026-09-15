@@ -22,3 +22,8 @@ output "data_storage_id" {
   description = "UUID of the persistent /data storage"
   value       = upcloud_storage.data.id
 }
+
+output "fqdn" {
+  description = "Public DNS name of the box (null when disabled)"
+  value       = one(aws_route53_record.dev_box[*].fqdn)
+}
