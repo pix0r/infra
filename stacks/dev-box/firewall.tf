@@ -1,5 +1,5 @@
-# SSH in only. The orchestrator UI (port 4000) is reached over an SSH port-forward,
-# never exposed publicly.
+# SSH + mosh in, everything out. Apps are reached over an SSH port-forward,
+# never exposed publicly. NixOS runs its own firewall with the same rules.
 resource "hcloud_firewall" "dev_box" {
   name = "dev-box"
 
@@ -7,6 +7,14 @@ resource "hcloud_firewall" "dev_box" {
     direction  = "in"
     protocol   = "tcp"
     port       = "22"
+    source_ips = ["0.0.0.0/0", "::/0"]
+  }
+
+  # mosh (UDP) — worth it at ~150 ms from the US west coast
+  rule {
+    direction  = "in"
+    protocol   = "udp"
+    port       = "60000-61000"
     source_ips = ["0.0.0.0/0", "::/0"]
   }
 

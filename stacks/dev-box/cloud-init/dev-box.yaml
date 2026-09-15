@@ -1,52 +1,52 @@
 #cloud-config
-# Disposable Claude Code dev box. Rendered by stacks/dev-box/server.tf via templatefile().
-# Ubuntu 24.04. Non-root user `dev` (Claude Code refuses --dangerously-skip-permissions
-# as root), SSH keys pulled from GitHub, Docker + Node 22 + Claude Code + gh + tmux.
-#
-# Nothing from the laptop goes on this box. The only credentials it ever holds are
-# the Claude login and a repo-scoped GitHub token you add after first SSH.
-users:
-  - name: dev
-    groups: [sudo, docker]
-    shell: /bin/bash
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    ssh_import_id: [gh:${github_user}]
+# First-boot bootstrap. Rendered by stacks/dev-box/server.tf via templatefile().
+# Runs ONCE on Ubuntu, converts the box to NixOS, then hands over to the flake.
+# Nothing here is the box's config — that is hosts/dev-box/*.nix at the repo root.
 
-package_update: true
-package_upgrade: true
-packages:
-  - git
-  - tmux
-  - curl
-  - ca-certificates
-  - build-essential
-  - jq
-  - ripgrep
-  - fail2ban
-  - unattended-upgrades
+write_files:
+  # Bootstrap-only NixOS module, imported by the configuration.nix that
+  # nixos-infect generates. Replaced entirely by the flake on the next boot.
+  - path: /etc/nixos/host.nix
+    permissions: "0644"
+    content: |
+      { pkgs, ... }:
+      {
+        nix.settings.experimental-features = [ "nix-command" "flakes" ];
+        environment.systemPackages = [ pkgs.git ];
+
+        # One-shot: build the flake's boot generation, make it default, reboot.
+        # `boot` (not `switch`) so the unit is not killed by its own activation.
+        # The flake config does not define this unit, so it never runs again.
+        systemd.services.flake-bootstrap = {
+          description = "Switch to ${flake_ref} and reboot";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          path = [ pkgs.nixos-rebuild pkgs.nix pkgs.git pkgs.systemd ];
+          serviceConfig.Type = "oneshot";
+          script = '''
+            set -euo pipefail
+            nixos-rebuild boot --flake "${flake_ref}" --refresh 2>&1 | tee /var/log/flake-bootstrap.log
+            systemctl reboot
+          ''';
+        };
+      }
+
+  - path: /usr/local/sbin/label-data-volume
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      # Wait for the Hetzner volume to attach, then give its filesystem the label
+      # the flake mounts by. Idempotent: never formats, only labels.
+      set -euo pipefail
+      dev=/dev/disk/by-id/scsi-0HC_Volume_${volume_id}
+      for _ in $(seq 1 120); do [ -e "$dev" ] && break; sleep 5; done
+      [ -e "$dev" ] || { echo "volume $dev never appeared" >&2; exit 1; }
+      fstype=$(blkid -o value -s TYPE "$dev" || true)
+      [ "$fstype" = "ext4" ] || { echo "expected ext4 on $dev, got '$fstype'; refusing to touch it" >&2; exit 1; }
+      e2label "$dev" data
+      echo "labeled $dev as 'data'"
 
 runcmd:
-  # Docker (official convenience script; pins nothing by design, this box is disposable)
-  - curl -fsSL https://get.docker.com | sh
-  - usermod -aG docker dev
-  # Node 22 + Claude Code
-  - curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-  - apt-get install -y nodejs
-  - npm install -g @anthropic-ai/claude-code@${claude_code_version}
-  # GitHub CLI (for `gh auth login --with-token` + `gh auth setup-git` on the box)
-  - install -m 0755 -d /etc/apt/keyrings
-  - curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli-archive-keyring.gpg
-  - chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-  - echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
-  - apt-get update
-  - apt-get install -y gh
-  # SSH hardening
-  - sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication no/' /etc/ssh/sshd_config
-  - sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config
-  - sed -i 's/^#\?MaxAuthTries .*/MaxAuthTries 3/' /etc/ssh/sshd_config
-  - systemctl restart ssh
-  - systemctl enable --now fail2ban
-  # Sentinel for "cloud-init finished"
-  - touch /home/dev/CLOUD-INIT-DONE && chown dev:dev /home/dev/CLOUD-INIT-DONE
-
-final_message: "dev-box ready after $UPTIME seconds"
+  - /usr/local/sbin/label-data-volume 2>&1 | tee /var/log/label-data-volume.log
+  - curl -fsSL https://raw.githubusercontent.com/elitak/nixos-infect/${nixos_infect_ref}/nixos-infect | PROVIDER=hetznercloud NIXOS_IMPORT=./host.nix NIX_CHANNEL=${nixos_channel} bash 2>&1 | tee /tmp/infect.log

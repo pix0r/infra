@@ -1,0 +1,23 @@
+name: Nix Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["flake.nix", "flake.lock", "hosts/**", ".github/workflows/nix-check.yml"]
+  push:
+    branches: [main]
+    paths: ["flake.nix", "flake.lock", "hosts/**", ".github/workflows/nix-check.yml"]
+
+jobs:
+  eval:
+    name: Evaluate nixosConfigurations
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - name: Evaluate dev-box system closure
+        run: nix eval --raw .#nixosConfigurations.dev-box.config.system.build.toplevel.drvPath
+      - name: flake.lock is current
+        run: nix flake lock --no-update-lock-file

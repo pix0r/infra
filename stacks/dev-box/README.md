@@ -1,103 +1,93 @@
-# dev-box — disposable Claude Code box on Hetzner
+# dev-box — NixOS box for Claude Code + Elixir, deployed from git
 
-One small Ubuntu server for running Claude Code (and the brain orchestrator) unattended,
-off the laptop. SSH in only. Created and destroyed through git so there is a durable
-record of every box.
+One small Hetzner server (default **cpx22**, 2 vCPU / 4 GB, Ashburn, ~USD 23/mo)
+plus a persistent volume. US on purpose: EU is 5x cheaper but ~150 ms from California,
+and this box is interactive. Provider choice is under review (brain: hosting-provider-eval-2026). **Two layers, two loops:**
 
-**Not** the k3s + Flux `primary` substrate (that's `stacks/hetzner-primary`, PR #6).
-This stack has no DNS, no ingress, no cluster. Retire it when `primary` exists.
+| Layer | Owned by | Change it by |
+|---|---|---|
+| Server, volume, firewall, SSH keys | `stacks/dev-box/*.tf` | PR → merge → `deploy.yml` runs `tofu apply` |
+| Everything on the box (users, packages, tmux, docker, services) | `hosts/dev-box/*.nix` at the repo root | PR → merge → **comin on the box** pulls main and `nixos-rebuild switch`es (~1 min) |
+
+The server is cattle: replace it any time. `/data` (home dirs, repos, docker) is a
+Hetzner volume that survives replacement and `enabled = false`.
+
+## Costs (2026-09, excl. VAT, hourly-billed)
+
+| Item | Monthly |
+|---|---|
+| cpx22 server (ash) | ~USD 23 |
+| 20 GB volume | ~USD 1.3 |
+| IPv4 | ~USD 0.6 |
+| **Total** | **~USD 25** |
+
+cpx32 (4 vCPU / 8 GB) is ~USD 42 if 4 GB is too tight for Elixir builds. EU cx33 (4/8)
+would be ~EUR 10 all-in but ~150 ms away; cx*/cax* types are EU-only.
 
 ## What you need
 
 | Credential | Where | Used for |
 |---|---|---|
-| `TF_VAR_hcloud_token` | `secrets/terraform.env` (SOPS) | creating the server, firewall, SSH keys |
-| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | `secrets/terraform.env` (SOPS) | S3 state bucket only |
-| GitHub public keys | `https://github.com/<github_user>.keys` | SSH auth for `root` and `dev` |
+| `TF_VAR_hcloud_token` (Read & Write) | `secrets/terraform.env` (SOPS) | server, volume, firewall, keys |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | `secrets/terraform.env` (SOPS) | S3 state only |
+| GitHub public keys | `hosts/dev-box/configuration.nix` (`sshKeys`) and Hetzner (`ssh.tf`) | SSH as `dev` / `root` |
 
-The Hetzner token must be **Read & Write**. On the box itself, only two credentials are
-ever added, both after first SSH: the Claude login (device-code flow) and a fine-grained
-GitHub token scoped to the repos you clone. No AWS creds, no age key, no laptop keys.
+On the box, after first SSH: `claude` (device-code login) and `gh auth login --with-token`
+with a fine-grained PAT scoped to the repos you clone. Nothing else. No AWS creds, no
+age key, no laptop keys. This repo is public, so comin needs no token.
 
-## Turn on / turn off
+## First boot (what happens, ~10 min)
 
-`var.enabled` (default `true`) controls whether the server exists. Firewall and SSH keys
-are free and stay either way.
+1. `tofu apply` creates volume → server (Ubuntu) → attaches volume.
+2. cloud-init waits for the volume, labels its filesystem `data`, runs **nixos-infect**
+   (pinned commit, `var.nixos_infect_ref`) with a bootstrap `host.nix`, reboots into NixOS.
+3. On that boot a one-shot `flake-bootstrap` unit runs
+   `nixos-rebuild boot --flake github:pix0r/infra#dev-box` and reboots.
+4. Now the flake config is live: `dev` user with home on `/data`, tmux, docker, comin.
+   comin polls `main` every 60 s from here on.
 
-- **On:** merge a PR with `enabled = true` → `deploy.yml` applies → server exists.
-- **Off:** merge a PR flipping `enabled = false` → `deploy.yml` destroys the server.
+Watch it: `ssh root@<ip> tail -f /tmp/infect.log`, then after the first reboot
+`ssh root@<ip> journalctl -fu flake-bootstrap`, then `ssh dev@<ip>`.
 
-Hourly billing stops at delete. Powering off does not stop billing.
+## Day to day
 
-Change the default in `variables.tf` in the PR. Do not use a local `terraform.tfvars`
-(gitignored): the committed default is the durable record of whether a box exists.
+- **Change the box:** edit `hosts/dev-box/configuration.nix`, PR (CI evaluates the
+  flake), merge. `ssh dev@<ip> journalctl -u comin -f` shows the switch.
+- **Add an Elixir app:** put the release under `/data/apps/<name>`, uncomment and adapt
+  the `systemd.services` pattern in `configuration.nix`.
+- **Bump nixpkgs:** `nix flake update` (Docker: see below), commit `flake.lock`.
+- **Turn off:** PR with `enabled = false` in `variables.tf`, merge. Volume stays.
+- **Turn on:** flip back. New server, same `/data`, same home dir.
+- **Rebuild from scratch:** any change to `cloud-init/` replaces the server (the plan
+  says "must be replaced"). `/data` is untouched.
 
-## Apply
-
-**Via CI (default path, no local tooling):** open a PR, read the plan comment from
-`preview.yml`, merge. `deploy.yml` runs `tofu apply` on the changed stack. The server IP
-is in the job's apply output (`ssh_command`).
-
-**Locally, without installing tofu** (Docker only; the image is pinned to the version in
-`.tool-versions`):
+## Working without installing nix or tofu on the laptop
 
 ```bash
-cd stacks/dev-box
+# validate the flake (from repo root; in a git *worktree* copy flake.nix + hosts/ to a
+# scratch dir first — the worktree's .git pointer is not visible inside the container)
+docker run --rm -v "$PWD":/w -w /w nixos/nix:latest \
+  nix --extra-experimental-features "nix-command flakes" \
+  eval --raw .#nixosConfigurations.dev-box.config.system.build.toplevel.drvPath
+
+# update inputs
+docker run --rm -v "$PWD":/w -w /w nixos/nix:latest \
+  nix --extra-experimental-features "nix-command flakes" flake update
+
+# tofu (from stacks/dev-box); the backend block is Terramate-generated in CI —
+# write it once locally as _terramate_generated_backend.tf (gitignored), see git history
 tofu() { docker run --rm -it -v "$PWD":/work -w /work \
   -e TF_VAR_hcloud_token -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_REGION=us-east-1 \
   ghcr.io/opentofu/opentofu:1.9.0 "$@"; }
-# backend block is Terramate-generated; without terramate installed, write it once:
-cat > _terramate_generated_backend.tf <<'HCL'
-terraform {
-  backend "s3" {
-    bucket       = "matz-infra-tfstate"
-    key          = "stacks/fce6041a-e277-40fd-9601-c31d876f1825/terraform.tfstate"
-    region       = "us-east-1"
-    use_lockfile = true
-  }
-}
-HCL
-sops exec-env ../../secrets/terraform.env 'tofu init'
 sops exec-env ../../secrets/terraform.env 'tofu plan'
-sops exec-env ../../secrets/terraform.env 'tofu apply'
-tofu output
 ```
 
-The generated backend file is gitignored (`_terramate_generated_*`) and matches what
-`terramate generate` produces from `generate.tm.hcl`, so CI and local share state.
+## Gotchas
 
-## First SSH
-
-cloud-init takes ~3–5 minutes after the server is up.
-
-```bash
-ssh dev@<ipv4>
-ls ~/CLOUD-INIT-DONE          # exists when cloud-init finished
-tmux
-claude                        # device-code login in your browser
-gh auth login --with-token    # paste a fine-grained PAT: pix0r/brain + pix0r/brain-orchestrator, Contents RW
-gh auth setup-git
-git clone --recurse-submodules https://github.com/pix0r/brain ~/brain
-```
-
-For the orchestrator on the box: `claude setup-token`, put it in the orchestrator env
-file per `apps/orchestrator/rel/README.md`, then `brain start`. Reach the UI with the
-`orchestrator_tunnel_command` output (`ssh -N -L 4000:localhost:4000 dev@<ip>`) and open
-<http://localhost:4000>.
-
-## Done with it
-
-Push your branches, then flip `enabled = false` and merge (or `tofu destroy` locally).
-Rotate the GitHub PAT you minted for the box.
-
-## Sizing
-
-| Type | vCPU / RAM | ~EUR/mo | Note |
-|---|---|---|---|
-| cpx21 | 3 / 4 GB | 8 | fine for Claude sessions alone |
-| **cpx31** (default) | 4 / 8 GB | 15 | Docker + orchestrator + a couple of sessions |
-| cpx41 | 8 / 16 GB | 28 | if Elixir builds in Docker get slow |
-
-x86 on purpose: it sidesteps any arm64 gaps in the orchestrator's Docker image, and ARM
-(cax) availability in `ash` was not verified. The API rejects unavailable type/location
-pairs at plan time, so a wrong guess fails loudly, not silently.
+- `hosts/dev-box/hardware.nix` hard-codes Hetzner x86 layout (BIOS, `/dev/sda1`); cpx* and
+  cx* both fit. A cax* (ARM) box or another provider needs a different hardware.nix.
+- The volume has `prevent_destroy` + Hetzner delete protection. Removing it is a
+  deliberate two-step (drop both, apply).
+- If the flake fails to build on the box, comin keeps the last good generation; fix
+  forward on main. If the *bootstrap* fails, `tofu apply -replace=hcloud_server.dev_box[0]`.
+- `system.stateVersion` stays `26.05` forever; bumping nixpkgs is `flake.lock`.

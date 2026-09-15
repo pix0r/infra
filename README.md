@@ -1,6 +1,6 @@
 # infra
 
-IaC for personal infrastructure on Hetzner Cloud, managed with Terramate + OpenTofu.
+IaC for personal infrastructure on Hetzner Cloud, managed with Terramate + OpenTofu. NixOS hosts are declared in `flake.nix` and self-deploy from `main` via comin.
 
 ## Architecture
 
@@ -8,7 +8,9 @@ IaC for personal infrastructure on Hetzner Cloud, managed with Terramate + OpenT
 stacks/
 ├── tfstate-backend/     # S3 bucket + IAM user (bootstrap first, local state)
 ├── hetzner-primary/     # Primary server: Coolify + Forgejo + apps
-└── dev-box/             # Disposable Claude Code box (SSH only, toggle via var.enabled)
+└── dev-box/             # NixOS dev box (Claude Code + Elixir), persistent volume, toggle via var.enabled
+
+flake.nix + hosts/<host>/  # NixOS configs. Merged to main → comin on the box applies them.
 ```
 
 | Service | URL |
