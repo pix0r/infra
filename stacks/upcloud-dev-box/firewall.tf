@@ -59,6 +59,16 @@ resource "upcloud_firewall_rules" "dev_box" {
   }
 
   firewall_rule {
+    action                 = "accept"
+    comment                = "Tailscale direct peer connections (UDP 41641)"
+    direction              = "in"
+    family                 = "IPv4"
+    protocol               = "udp"
+    destination_port_start = "41641"
+    destination_port_end   = "41641"
+  }
+
+  firewall_rule {
     action    = "accept"
     comment   = "all outbound"
     direction = "out"

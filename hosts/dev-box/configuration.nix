@@ -63,10 +63,28 @@ in
   };
   services.fail2ban.enable = true;
   programs.mosh.enable = true; # opens UDP 60000-61000 in the NixOS firewall
+
+  # Tailscale: `ssh dev@dev-box` and http://dev-box:4000 from any tailnet device.
+  # One-time after first boot: `sudo tailscale up` and open the printed URL.
+  # Its identity lives on /data so it survives server replacement.
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+  };
+  fileSystems."/var/lib/tailscale" = {
+    device = "/data/tailscale";
+    fsType = "none";
+    options = [ "bind" ];
+    depends = [ "/data" ];
+  };
+  systemd.tmpfiles.rules = [ "d /data/tailscale 0700 root root -" ];
+
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 22 ];
-    # Apps stay private: reach them with `ssh -L 4000:localhost:4000 dev@<ip>`.
+    allowedUDPPorts = [ config.services.tailscale.port ]; # 41641, direct peer connections
+    trustedInterfaces = [ "tailscale0" ]; # everything (e.g. port 4000) open to the tailnet only
+    # From the public internet only SSH + mosh; apps are reached over the tailnet.
   };
 
   # ---- Tooling -------------------------------------------------------------------
