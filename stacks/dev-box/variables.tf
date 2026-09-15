@@ -8,7 +8,7 @@ variable "hcloud_token" {
 variable "enabled" {
   description = "Create the server (true) or destroy it (false). The data volume, firewall and SSH keys persist either way. Flip and merge to turn the box on/off."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "server_name" {
