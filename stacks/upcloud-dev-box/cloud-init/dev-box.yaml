@@ -1,0 +1,27 @@
+#cloud-config
+# Runs once on the throwaway Ubuntu template, before nixos-anywhere replaces it.
+# Its only job: make sure the attached /data storage has an ext4 filesystem
+# labeled `data`, which hosts/dev-box/hardware.nix mounts by label.
+# Formats ONLY a blank device; never touches a device that already has a filesystem.
+write_files:
+  - path: /usr/local/sbin/label-data-volume
+    permissions: "0755"
+    content: |
+      #!/usr/bin/env bash
+      set -euo pipefail
+      root_disk=$(lsblk -no PKNAME "$(findmnt -no SOURCE /)")
+      dev=""
+      for d in $(lsblk -dn -o NAME,TYPE | awk '$2=="disk"{print $1}'); do
+        [ "$d" = "$root_disk" ] && continue
+        dev="/dev/$d"; break
+      done
+      [ -n "$dev" ] || { echo "no data disk found besides /dev/$root_disk" >&2; exit 1; }
+      fstype=$(blkid -o value -s TYPE "$dev" || true)
+      case "$fstype" in
+        "")     mkfs.ext4 -q -L data "$dev"; echo "formatted $dev as ext4 label=data" ;;
+        ext4)   e2label "$dev" data; echo "labeled existing ext4 on $dev as data" ;;
+        *)      echo "refusing to touch $dev with filesystem '$fstype'" >&2; exit 1 ;;
+      esac
+
+runcmd:
+  - /usr/local/sbin/label-data-volume 2>&1 | tee /var/log/label-data-volume.log
