@@ -1,7 +1,7 @@
 variable "enabled" {
   description = "Create the server (true) or destroy it (false). The /data storage persists either way. Flip and merge to turn the box on/off."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "hostname" {
