@@ -35,6 +35,29 @@ resource "upcloud_firewall_rules" "dev_box" {
     protocol  = "icmp"
   }
 
+  # UpCloud's firewall is NOT stateful for UDP: outbound queries leave, the
+  # replies get dropped unless explicitly accepted. Without these, DNS (and
+  # NTP) silently fail even though TCP works. Verified 2026-09-15.
+  firewall_rule {
+    action            = "accept"
+    comment           = "DNS replies (UDP, stateless firewall)"
+    direction         = "in"
+    family            = "IPv4"
+    protocol          = "udp"
+    source_port_start = "53"
+    source_port_end   = "53"
+  }
+
+  firewall_rule {
+    action            = "accept"
+    comment           = "NTP replies (UDP, stateless firewall)"
+    direction         = "in"
+    family            = "IPv4"
+    protocol          = "udp"
+    source_port_start = "123"
+    source_port_end   = "123"
+  }
+
   firewall_rule {
     action    = "accept"
     comment   = "all outbound"

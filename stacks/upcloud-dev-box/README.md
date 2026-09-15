@@ -72,6 +72,11 @@ sops exec-env ../../secrets/terraform.env 'tofu plan'
 
 ## Gotchas
 
+- **UpCloud's firewall is stateless for UDP.** Inbound rules must accept UDP replies
+  (source port 53 for DNS, 123 for NTP) or name resolution silently dies while TCP
+  keeps working. Symptom: `Resolving timed out`, comin cannot pull, Claude Code cannot
+  reach the API. `firewall.tf` carries those rules; do not remove them.
+
 - `hosts/dev-box/disko.nix` owns `/dev/vda` only. `/data` is never declared to disko,
   so reinstalls cannot format it. cloud-init formats it **only if blank**.
 - UpCloud firewall is on (trial accounts cannot disable it) with accept rules for 22 +
