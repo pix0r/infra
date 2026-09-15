@@ -50,6 +50,9 @@ jobs:
           tofu_version: 1.11.6
           tofu_wrapper: false
 
+      - name: Install Nix (nixos-anywhere runs inside tofu apply for NixOS stacks)
+        uses: DeterminateSystems/nix-installer-action@v16
+
       - name: Generate Terramate code
         run: terramate generate
 
