@@ -43,9 +43,9 @@ reach the fresh template. On the box, after first SSH: `claude` login and
 
 ## Reaching it
 
-- Public name: **`dev.matz.io`** (Route 53 A record, TTL 60, follows the IP through
-  replacements). `ssh dev@dev.matz.io`. Add to `~/.ssh/config` on the laptop:
-  `Host dev` / `HostName dev.matz.io` / `User dev`.
+- Public name: **`dev-box.matz.io`** (Route 53 A record, TTL 60, follows the IP through
+  replacements). `ssh dev@dev-box.matz.io`. Add to `~/.ssh/config` on the laptop:
+  `Host dev` / `HostName dev-box.matz.io` / `User dev`.
 - Tailnet (once `hosts/dev-box` has Tailscale): `ssh dev@dev-box`, and the orchestrator
   UI at `http://dev-box:4000` from any tailnet device, no SSH tunnel.
 

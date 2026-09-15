@@ -79,7 +79,7 @@ variable "domain" {
 variable "dns_name" {
   description = "Host label for the box under var.domain. Empty string = no record."
   type        = string
-  default     = "dev"
+  default     = "dev-box"
 }
 
 variable "aws_region" {
