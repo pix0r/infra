@@ -47,12 +47,12 @@ jobs:
       - name: Install Terramate
         uses: terramate-io/terramate-action@v3
         with:
-          version: detect
+          version: 0.14.0
 
       - name: Install OpenTofu
         uses: opentofu/setup-opentofu@v1
         with:
-          tofu_version: detect
+          tofu_version: 1.11.6
           tofu_wrapper: false
 
       - name: Check Terramate formatting
@@ -86,7 +86,7 @@ jobs:
             --changed \
             --continue-on-error \
             -- \
-            tofu plan -out out.otplan -detailed-exitcode -lock=false
+            tofu plan -out out.otplan -lock=false
 
       - name: Comment plan on PR
         if: steps.list.outputs.stdout
