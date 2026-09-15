@@ -74,10 +74,11 @@ sops exec-env ../../secrets/terraform.env 'tofu plan'
 
 - `hosts/dev-box/disko.nix` owns `/dev/vda` only. `/data` is never declared to disko,
   so reinstalls cannot format it. cloud-init formats it **only if blank**.
-- UpCloud firewall is on (trial accounts cannot disable it) with accept rules for 22 +
-  mosh and no catch-all drop, so it can never lock you out; the NixOS firewall is the
-  one that actually drops everything else. Add a final drop rule for defence in depth
-  once the account is out of trial and you have tested it.
+- **Trial account firewall**: UpCloud forces `firewall = true` and rejects any
+  `upcloud_firewall_rules` (`TRIAL_FIREWALL`, 403) until the account is out of trial.
+  The trial ruleset is fixed by UpCloud. Once out of trial, add an accept-only
+  `upcloud_firewall_rules` (22, mosh 60000-61000, ICMP in; all out) and make the
+  install step `depends_on` it. The NixOS nftables firewall is the enforcing one.
 - If nixos-anywhere fails mid-way the server is left in the kexec installer; re-run
   the apply with `-replace='upcloud_server.dev_box[0]'`.
 - `system.stateVersion` stays `26.05` forever; bumping nixpkgs is `flake.lock`.
