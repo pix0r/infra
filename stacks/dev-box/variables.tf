@@ -8,7 +8,7 @@ variable "hcloud_token" {
 variable "enabled" {
   description = "Create the box (true) or destroy it while keeping firewall + SSH keys (false). Flip and merge to turn the box on/off."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "server_name" {
