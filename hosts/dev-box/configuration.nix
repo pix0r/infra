@@ -92,6 +92,7 @@ in
     git gh tmux mosh ripgrep jq htop neovim curl tree
     beam.erlang beam.elixir_1_18
     pkgs-unstable.claude-code
+    pkgs-unstable.codex # OpenAI Codex CLI; moves as fast as claude-code
   ];
   environment.variables.EDITOR = "nvim";
 
