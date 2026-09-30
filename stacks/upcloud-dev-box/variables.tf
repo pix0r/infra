@@ -17,9 +17,9 @@ variable "zone" {
 }
 
 variable "plan" {
-  description = "UpCloud plan name. PREMIUM-8xCPU-32GB provides 8 CPUs and 32 GB RAM for parallel builds. Prices per zone: GET /1.3/price."
+  description = "UpCloud plan name. STARTER-4xCPU-16GB provides 4 CPUs and 16 GB RAM for builds. Prices per zone: GET /1.3/price."
   type        = string
-  default     = "PREMIUM-8xCPU-32GB"
+  default     = "STARTER-4xCPU-16GB"
 }
 
 variable "template" {

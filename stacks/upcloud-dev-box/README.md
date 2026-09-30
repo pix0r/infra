@@ -1,6 +1,6 @@
 # upcloud-dev-box — NixOS box on UpCloud, deployed from git
 
-One server in **San Jose** (default plan `PREMIUM-8xCPU-32GB`, 8 CPUs / 32 GB RAM) plus a persistent 20 GB storage
+One server in **San Jose** (default plan `STARTER-4xCPU-16GB`, 4 CPUs / 16 GB RAM) plus a persistent 20 GB storage
 at `/data`. The OS is **NixOS, declared in `hosts/dev-box/` at the repo root**.
 
 | Layer | Owned by | Change it by |
@@ -34,7 +34,7 @@ reach the fresh template. On the box, after first SSH: `claude` login and
    `UPCLOUD_TOKEN=...` → save → commit.
 2. Confirm plan and zone names (both are rejected by the API if wrong):
    ```bash
-   sops exec-env secrets/terraform.env 'curl -s -H "Authorization: Bearer $UPCLOUD_TOKEN" https://api.upcloud.com/1.3/plan' | jq '.plans.plan[] | select(.core_number==8 and .memory_amount==32768) | {name, storage_size}'
+   sops exec-env secrets/terraform.env 'curl -s -H "Authorization: Bearer $UPCLOUD_TOKEN" https://api.upcloud.com/1.3/plan' | jq '.plans.plan[] | select(.core_number==4 and .memory_amount==16384) | {name, storage_size}'
    sops exec-env secrets/terraform.env 'curl -s -H "Authorization: Bearer $UPCLOUD_TOKEN" https://api.upcloud.com/1.3/zone' | jq '.zones.zone[] | select(.id|startswith("us")) | .id'
    ```
    Adjust `var.plan` / `var.zone` defaults if needed.
