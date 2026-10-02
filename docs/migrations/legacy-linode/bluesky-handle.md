@@ -6,9 +6,12 @@ new account. Public DNS and the Bluesky resolveHandle API both returned
 `at://flyingyeti.com` and uses the Bluesky PDS
 `https://russula.us-west.host.bsky.network`.
 
-Status: the zone candidate passed validation, but publishing requires
-interactive sudo on `epic3`. Completion requires both live TXT verification and
-the account's DID document claiming the new handle.
+Status as of 2026-10-02 at 12:15 UTC: Mike installed the validated zone and
+reloaded BIND. Both authoritative addresses, Cloudflare, Google, and the public
+Bluesky resolver returned the expected DID. Mail DNS records matched the
+original configuration. The account's DID document still claimed
+`at://flyingyeti.com`; the remaining step is saving the new handle in Bluesky.
+See the [verification record](evidence/2026-10-02-handle-verification.txt).
 
 ## Required record
 
@@ -21,11 +24,14 @@ SPF/DKIM records. DNS verification needs no web server, certificate, or A record
 The DNS value and the DID's claimed handle must agree. See the
 [AT Protocol handle specification](https://atproto.com/specs/handle).
 
-## Prepared candidate
+## Published candidate
 
 The [candidate](evidence/pixor.net.with-atproto.zone) has serial `2026100201`.
 On 2026-10-02 it was uploaded to the private directory
 `/tmp/pixor-atproto.PjreDB` on `epic3`; `named-checkzone pixor.net` reported `OK`.
+Mike subsequently installed this file into `/etc/bind/master/pixor.net` and
+queued a zone reload. The following publishing commands are retained as the
+runbook for that completed step; do not reapply the old candidate over later changes.
 The directory is temporary and may disappear after reboot or cleanup. If it is
 missing, upload the candidate again and update the path below. If the live zone
 has changed, rebuild the addition against the current zone with a higher serial.

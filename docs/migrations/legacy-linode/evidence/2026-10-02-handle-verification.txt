@@ -1,0 +1,31 @@
+Verified 2026-10-02 at approximately 12:15 UTC.
+
+TXT _atproto.mike.pixor.net, queried against:
+  45.79.94.199: did=did:plc:dtf7zmcsjtwedsdbdaxhfkrj
+  23.239.7.131: did=did:plc:dtf7zmcsjtwedsdbdaxhfkrj
+  1.1.1.1: did=did:plc:dtf7zmcsjtwedsdbdaxhfkrj
+  8.8.8.8: did=did:plc:dtf7zmcsjtwedsdbdaxhfkrj
+
+SOA pixor.net, both authoritative addresses:
+  ns1.pixor.net. hostmaster.pixor.net. 2026100201 1200 900 3600000 3600
+
+MX pixor.net, both authoritative addresses:
+  10 in1-smtp.messagingengine.com.
+  20 in2-smtp.messagingengine.com.
+
+TXT pixor.net, authoritative address 45.79.94.199:
+  v=spf1 include:spf.messagingengine.com ?all
+
+CNAME, authoritative address 45.79.94.199:
+  fm1._domainkey.pixor.net. -> fm1.pixor.net.dkim.fmhosted.com.
+  fm2._domainkey.pixor.net. -> fm2.pixor.net.dkim.fmhosted.com.
+  fm3._domainkey.pixor.net. -> fm3.pixor.net.dkim.fmhosted.com.
+
+GET https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=mike.pixor.net
+  {"did":"did:plc:dtf7zmcsjtwedsdbdaxhfkrj"}
+
+GET https://plc.directory/did:plc:dtf7zmcsjtwedsdbdaxhfkrj
+  alsoKnownAs: ["at://flyingyeti.com"]
+  serviceEndpoint: https://russula.us-west.host.bsky.network
+
+Conclusion: DNS publication verified; account-side handle activation pending.

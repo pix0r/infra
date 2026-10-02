@@ -19,7 +19,7 @@ checks. Target application placement remains to be decided after inventory.
 | Worktree | `.claude/worktrees/legacy-migration`, branch `migration/legacy-linode`, based on locally fetched `origin/main` at `2a85404` |
 | Jenkins log cleanup | Confirmed: log is empty; root filesystem has 36 GB available and is 55% used |
 | Jenkins boot configuration | Confirmed disabled; not listed among running services in the latest check |
-| Bluesky TXT record | Candidate prepared and validated; live publication still needs verification |
+| Bluesky TXT record | Published by Mike and verified on both authoritative addresses, Cloudflare, Google, and the public Bluesky resolver; account handle update pending |
 | Route 53 migration | Planned; no hosted zone or delegation change created by this project |
 | Full service and data inventory | Initial read-only pass complete; privileged and application-level inventory outstanding |
 
@@ -37,6 +37,7 @@ checks. Target application placement remains to be decided after inventory.
 | Management | Flat BIND files and shell helpers in a Git repo at `/etc/bind`; no `pixor.net` stack in this infra repo |
 | Git state | Initial inspection showed `MM master/pixor.net`; Mike subsequently reported a clean working tree. Existing Git history is the zone rollback source |
 | Initial SOA serial | `2021102501` on both public addresses |
+| Serial after handle publication | `2026100201` on both public addresses |
 | Zone default TTL | 600 seconds |
 | Parent delegation TTL | `.net` referral shows 172800 seconds, or 48 hours |
 | DNSSEC | No DS record observed at the parent; recheck before cutover |
@@ -78,8 +79,15 @@ reported `OK`. SHA-256:
 f4f72be7ce133ef9a96de419a3996e70d9a71d81a8a3a6e33cf11affc147b116
 ```
 
+Mike installed the proposed handle zone and reloaded BIND. At 12:15 UTC on
+2026-10-02, both authoritative addresses and public resolvers returned the new
+TXT, and the public Bluesky resolver returned the expected DID. Apex MX, SPF,
+and all three DKIM targets matched the original configuration. The DID document
+still claimed `at://flyingyeti.com`, so the account-side handle change remained
+pending. See the [verification record](evidence/2026-10-02-handle-verification.txt).
+
 These are dated evidence, not the eventual desired Route 53 configuration.
-Refresh the export after publishing the handle and before DNS cutover.
+Refresh the live export before DNS cutover and carry the new TXT into Route 53.
 
 ## Jenkins and disk findings
 
