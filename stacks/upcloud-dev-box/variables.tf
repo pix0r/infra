@@ -17,9 +17,9 @@ variable "zone" {
 }
 
 variable "plan" {
-  description = "UpCloud plan name. Families (2026-09): STARTER-* (budget), CLOUDNATIVE-* (no bundled disk), PREMIUM-* (MaxIOPS disk); DEV-*/bare 4xCPU-8GB are discontinued. Prices per zone: GET /1.3/price. STARTER-4xCPU-8GB ~USD 26/mo in us-sjo1."
+  description = "UpCloud plan name. STARTER-4xCPU-16GB provides 4 CPUs and 16 GB RAM for builds. Prices per zone: GET /1.3/price."
   type        = string
-  default     = "STARTER-4xCPU-8GB"
+  default     = "STARTER-4xCPU-16GB"
 }
 
 variable "template" {
