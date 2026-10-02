@@ -1,16 +1,16 @@
 # Bluesky handle setup for mike.pixor.net
 
-Use the existing account currently known as `flyingyeti.com`; do not create a
+Use the existing account originally known as `flyingyeti.com`; do not create a
 new account. Public DNS and the Bluesky resolveHandle API both returned
-`did:plc:dtf7zmcsjtwedsdbdaxhfkrj`. Its public DID document currently claims
-`at://flyingyeti.com` and uses the Bluesky PDS
+`did:plc:dtf7zmcsjtwedsdbdaxhfkrj`. Its public DID document now claims
+`at://mike.pixor.net` and uses the Bluesky PDS
 `https://russula.us-west.host.bsky.network`.
 
-Status as of 2026-10-02 at 12:15 UTC: Mike installed the validated zone and
+Status as of 2026-10-02 at 12:20 UTC: setup is complete. Mike installed the validated zone and
 reloaded BIND. Both authoritative addresses, Cloudflare, Google, and the public
 Bluesky resolver returned the expected DID. Mail DNS records matched the
-original configuration. The account's DID document still claimed
-`at://flyingyeti.com`; the remaining step is saving the new handle in Bluesky.
+original configuration. Mike saved the new handle in Bluesky, and the account's
+DID document now claims `at://mike.pixor.net`.
 See the [verification record](evidence/2026-10-02-handle-verification.txt).
 
 ## Required record

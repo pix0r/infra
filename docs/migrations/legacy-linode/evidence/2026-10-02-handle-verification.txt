@@ -29,3 +29,14 @@ GET https://plc.directory/did:plc:dtf7zmcsjtwedsdbdaxhfkrj
   serviceEndpoint: https://russula.us-west.host.bsky.network
 
 Conclusion: DNS publication verified; account-side handle activation pending.
+
+Final activation check 2026-10-02 at approximately 12:20 UTC:
+
+GET https://plc.directory/did:plc:dtf7zmcsjtwedsdbdaxhfkrj
+  alsoKnownAs: ["at://mike.pixor.net"]
+  serviceEndpoint: https://russula.us-west.host.bsky.network
+
+GET https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=mike.pixor.net
+  {"did":"did:plc:dtf7zmcsjtwedsdbdaxhfkrj"}
+
+Final conclusion: mike.pixor.net handle setup is complete; the link is bidirectional.

@@ -49,9 +49,10 @@
 - [x] Confirm the existing zone is committed; Mike installed the candidate with interactive sudo, validated it, and reloaded BIND. Use existing Git history for rollback.
 - [x] Verify the TXT and serial at both authoritative IPs; verify the TXT at Cloudflare, Google, and the public Bluesky resolver.
 - [x] Verify apex MX, SPF, and all three DKIM CNAMEs remain unchanged.
-- [ ] Save `mike.pixor.net` in the existing Bluesky account and verify the DID document claims it.
+- [x] Save `mike.pixor.net` in the existing Bluesky account and verify the DID document claims it; confirmed at 12:20 UTC on 2026-10-02.
 - [x] Update findings with DNS publication evidence and preserve the installed zone candidate.
-- [ ] Record final account activation evidence; refresh the live zone export before the Route 53 migration.
+- [x] Record final account activation evidence in the findings and verification record.
+- [ ] Refresh the live zone export before the Route 53 migration.
 
 ## Task 3 Complete the legacy inventory
 

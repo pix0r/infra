@@ -19,7 +19,7 @@ checks. Target application placement remains to be decided after inventory.
 | Worktree | `.claude/worktrees/legacy-migration`, branch `migration/legacy-linode`, based on locally fetched `origin/main` at `2a85404` |
 | Jenkins log cleanup | Confirmed: log is empty; root filesystem has 36 GB available and is 55% used |
 | Jenkins boot configuration | Confirmed disabled; not listed among running services in the latest check |
-| Bluesky TXT record | Published by Mike and verified on both authoritative addresses, Cloudflare, Google, and the public Bluesky resolver; account handle update pending |
+| Bluesky handle | Complete: DNS published and verified; the DID document claims `at://mike.pixor.net`, and Bluesky resolves it to the existing DID |
 | Route 53 migration | Planned; no hosted zone or delegation change created by this project |
 | Full service and data inventory | Initial read-only pass complete; privileged and application-level inventory outstanding |
 
@@ -82,9 +82,10 @@ f4f72be7ce133ef9a96de419a3996e70d9a71d81a8a3a6e33cf11affc147b116
 Mike installed the proposed handle zone and reloaded BIND. At 12:15 UTC on
 2026-10-02, both authoritative addresses and public resolvers returned the new
 TXT, and the public Bluesky resolver returned the expected DID. Apex MX, SPF,
-and all three DKIM targets matched the original configuration. The DID document
-still claimed `at://flyingyeti.com`, so the account-side handle change remained
-pending. See the [verification record](evidence/2026-10-02-handle-verification.txt).
+and all three DKIM targets matched the original configuration. Mike then saved
+the handle in Bluesky; at 12:20 UTC the DID document claimed
+`at://mike.pixor.net`, and Bluesky resolved the new handle to the same existing
+DID. Setup is complete. See the [verification record](evidence/2026-10-02-handle-verification.txt).
 
 These are dated evidence, not the eventual desired Route 53 configuration.
 Refresh the live export before DNS cutover and carry the new TXT into Route 53.
