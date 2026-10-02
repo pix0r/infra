@@ -53,19 +53,25 @@ diff -u /etc/bind/master/pixor.net /tmp/pixor-atproto.PjreDB/pixor.net
 ```
 
 The only record changes should be the serial and `_atproto.mike`. `diff` exits
-with status 1 when files differ, which is expected here. Back up outside
-`/etc/bind/master`: the legacy generator treats files inside that directory as
-zone names. Use a fresh backup filename if one already exists.
+with status 1 when files differ, which is expected here. The existing BIND Git
+history is the rollback source; no extra zone backup is needed. Confirm the
+zone matches its committed version and record that revision before publishing:
 
 ```bash
-sudo cp -p /etc/bind/master/pixor.net /var/backups/pixor.net.pre-atproto-20261002
+git -C /etc/bind diff --exit-code HEAD -- master/pixor.net
+zone_before_commit=$(git -C /etc/bind rev-parse HEAD)
+```
+
+If the diff shows changes, preserve them in Git before replacing the file.
+
+```bash
 sudo install -o root -g bind -m 0644 /tmp/pixor-atproto.PjreDB/pixor.net /etc/bind/master/pixor.net
 sudo named-checkzone pixor.net /etc/bind/master/pixor.net
 sudo rndc reload pixor.net
 ```
 
-Run each command only after the previous one succeeds. Do not stage or commit
-the entire legacy BIND repo: it already has unrelated staged/unstaged changes.
+Run each command only after the previous one succeeds. Review and stage only
+`master/pixor.net` when recording this change in the BIND repo.
 
 ## Verify authoritative DNS and public caches
 
@@ -102,8 +108,10 @@ account change. Keep the existing `flyingyeti.com` record during setup.
 
 ## Rollback
 
-If the new zone fails to load, restore the backed-up records, validate them,
-and reload the zone. If the new serial was ever served, advance the restored
+If the new zone fails to load, retrieve the original records with
+`git -C /etc/bind show "${zone_before_commit}:master/pixor.net"`, using the
+revision recorded before publishing. Validate the restored zone and reload it.
+If the new serial was ever served, advance the restored
 zone to a serial greater than the published value before reloading, rather
 than reintroducing `2021102501`. If the Bluesky account change was already
 saved, change its handle back to `flyingyeti.com` before removing the new TXT.

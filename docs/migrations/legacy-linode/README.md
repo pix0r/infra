@@ -35,7 +35,7 @@ checks. Target application placement remains to be decided after inventory.
 | DNS software | Both public DNS endpoints advertise BIND `9.10.3-P4-Ubuntu` |
 | Zone source | `/etc/bind/master/pixor.net`, loaded as a master zone through `/etc/bind/named.conf.local.master` |
 | Management | Flat BIND files and shell helpers in a Git repo at `/etc/bind`; no `pixor.net` stack in this infra repo |
-| Existing edits | `/etc/bind` reports `MM master/pixor.net`: staged and unstaged legacy changes must be preserved |
+| Git state | Initial inspection showed `MM master/pixor.net`; Mike subsequently reported a clean working tree. Existing Git history is the zone rollback source |
 | Initial SOA serial | `2021102501` on both public addresses |
 | Zone default TTL | 600 seconds |
 | Parent delegation TTL | `.net` referral shows 172800 seconds, or 48 hours |
@@ -147,7 +147,7 @@ access explicitly; do not assume the existing CI identity can perform them.
 - Include the handle TXT record in the later Route 53 migration.
 - Separate DNS cutover from website/database moves; keep current targets during the first DNS migration.
 - Identify and back up remaining workloads before deleting data or retiring `epic3`.
-- Preserve existing BIND working-tree changes; do not run its serial helper, which hardcodes an old serial.
+- Preserve existing BIND working-tree changes and use committed history for zone rollback; no extra zone backup is needed. Do not run its serial helper, which hardcodes an old serial.
 - Keep credentials, database dumps, mail archives, private keys, and raw private configurations out of Git; use SOPS or protected backup storage.
 - Apply the repository's TDD requirement to any new conversion tooling or infrastructure implementation. Today's artifacts are documentation and DNS data snapshots.
 

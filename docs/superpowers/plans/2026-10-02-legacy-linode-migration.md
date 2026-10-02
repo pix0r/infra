@@ -46,7 +46,7 @@
 - [x] Resolve `flyingyeti.com` through DNS and the public Bluesky API; confirm the same DID and its current DID document.
 - [x] Check current `_atproto.mike.pixor.net`: no `did=` record, only wildcard Keybase TXT.
 - [x] Prepare the minimal addition and serial `2026100201`; validate the candidate with `named-checkzone` on `epic3`.
-- [ ] Publish with interactive sudo or an approved existing admin SSH identity, preserving a source backup outside the generated zone directory.
+- [ ] Record the existing BIND Git revision and confirm the zone is committed; publish with interactive sudo or an approved existing admin SSH identity. Use Git history for rollback without an extra zone backup.
 - [ ] Verify the TXT and serial at both authoritative IPs and at independent public recursive resolvers.
 - [ ] Verify apex MX, SPF, and all three DKIM CNAMEs remain unchanged.
 - [ ] Save `mike.pixor.net` in the existing Bluesky account and verify the DID document claims it.
