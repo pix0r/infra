@@ -1,0 +1,137 @@
+$TTL	600
+
+@	IN	SOA	ns1.pixor.net. hostmaster.pixor.net.  (
+				2026100201 ; Serial
+				1200 ; Refresh
+				900	; Retry
+				3600000	; Expire
+				3600 )	; Minimum
+	;IN	TXT	"v=spf1 a mx ptr -all"
+	;IN	TXT "v=spf1 a mx ptr ip4:216.174.0.0/16 ?all"
+
+ 	IN	NS	ns1.pixor.net.
+	IN	NS	ns2.pixor.net.
+
+	IN	A	45.79.94.199
+
+; Google Apps Mail
+;	IN	TXT	"v=spf1 include:aspmx.googlemail.com ~all"
+;@	IN	MX	1	aspmx.l.google.com.
+;@	IN	MX	5	alt1.aspmx.l.google.com.
+;@	IN	MX	5	alt2.aspmx.l.google.com.
+;@	IN	MX	10	aspmx2.googlemail.com.
+;@	IN	MX	10	aspmx3.googlemail.com.
+;@	IN	MX	10	aspmx4.googlemail.com.
+;@	IN	MX	10	aspmx5.googlemail.com.
+
+; Fastmail
+	IN 	TXT	"v=spf1 include:spf.messagingengine.com ?all"
+@ IN MX 10 in1-smtp.messagingengine.com.
+@ IN MX 20 in2-smtp.messagingengine.com.
+* IN MX 10 in1-smtp.messagingengine.com.
+* IN MX 20 in2-smtp.messagingengine.com.
+
+; keybase
+	IN	TXT	"keybase-site-verification=qrrYTcxkBdP2tpDkhGFtuUJw2IXLLNDRTAdW3--f9qQ"
+
+
+ns1		IN	A	45.79.94.199
+ns2		IN	A	23.239.7.131
+
+2a		IN	A	216.174.107.239
+mail		IN	A	45.79.94.199
+www		IN	A	45.79.94.199
+devel		IN	A	45.79.94.199
+porno		IN	A	45.79.94.199
+devel1		IN	A	45.79.94.199
+tainted		IN	A	45.79.94.199
+tainted		IN	TXT	"v=spf1 a mx ptr -all"
+poop		IN	A	68.4.11.139
+q3		IN	A	45.79.94.199
+drugs		IN	A	45.79.94.199
+mrtg		IN	A	45.79.94.199
+myth		IN	CNAME	poop.pixor.net.
+nasty		IN	A	45.79.94.199
+pictures	IN	A	45.79.94.199
+gallery		IN	A	45.79.94.199
+partyguys	IN	A	45.79.94.199
+xbox		IN	A	45.79.94.199
+test-name	IN	A	45.79.94.199
+mailman		IN	A	45.79.94.199
+lists		IN	A	45.79.94.199
+lists		IN	MX	10 mail.pixor.net.
+chadhasworms	IN	A	45.79.94.199
+dickhit		IN	A	45.79.94.199
+matzmail	IN	A	45.79.94.199
+matzfamily	IN	A	45.79.94.199
+gluttony	IN	A	68.4.11.139
+promoso		IN	A	45.79.94.199
+ultrashock	IN	A	45.79.94.199
+home		IN	CNAME	mmatz.synology.me.
+synology	IN	CNAME	home.pixor.net.
+behemoth	IN	A	24.126.154.117
+sshd.pixor.net.	IN	A	173.254.205.136
+stage.pixor.net. IN A 45.79.94.199
+kamiandtom.pixor.net. IN A 45.79.94.199
+epic.pixor.net.	IN	A	216.174.107.98
+g		IN	CNAME	ghs.google.com
+bt		IN	CNAME	pixor.net.
+svn		IN	A	45.79.94.199
+code		IN	A	45.79.94.199
+*.code.pixor.net. IN	A	45.79.94.199
+git		IN	A	45.79.94.199
+labs		IN	A	45.79.94.199
+openid.pixor.net. IN	CNAME	www.myopenid.com.
+etnies		IN	A	70.182.194.251
+twss		IN	A 	45.79.94.199
+shared01	IN	A	173.254.205.131
+*.shared01	IN	A	173.254.205.131
+shared02	IN	A	173.254.205.142
+*.shared02	IN	A	173.254.205.142
+win7ultimate	IN	A	173.254.205.132
+fw1		IN	A	173.254.205.142
+codemachine	IN	A	173.254.205.134
+buttbaby	IN	A	173.254.205.135
+bb	IN	A	173.254.205.135
+sshd.buttbaby.pixor.net. IN A 173.254.205.136
+unity-asset-server IN A 173.254.205.142
+ud.pixor.net.	IN	A	45.79.94.199
+
+; colo
+colo.pixor.net		IN	A	173.254.205.130
+kyle.colo.pixor.net	IN	A	173.254.205.137
+epic2		IN	A	45.79.94.199
+epic2		IN	MX	10 epic2.pixor.net.
+tainted		IN	MX	10 epic2.pixor.net.
+keg.pixor.net.		IN	A	173.254.205.142
+sentry		IN	A	173.254.205.134
+
+; Monitoring
+admin IN A 173.254.205.134
+
+; huphtur
+yaybikes IN CNAME shared01.pixor.net.
+
+; linode
+potbox IN A 45.33.52.52
+; disable ipv6
+; potbox IN AAAA 2600:3c01::f03c:91ff:fea8:c711
+epic3 IN A 45.79.94.199
+zerg IN A 45.79.84.128
+; disable ipv6
+; zerg IN AAAA 2600:3c01::f03c:91ff:fe61:6112
+
+share2 IN CNAME d30yywdxklcp2x.cloudfront.net.
+share IN CNAME d30yywdxklcp2x.cloudfront.net.
+; share IN CNAME s3.amazonaws.com.
+
+_9906e6273b156baee534d92f140067eb.pixor.net. IN CNAME _e35d639d6168c0270ff1fa382e4a4837.acm-validations.aws.
+
+fm1._domainkey IN CNAME fm1.pixor.net.dkim.fmhosted.com.
+fm2._domainkey IN CNAME fm2.pixor.net.dkim.fmhosted.com.
+fm3._domainkey IN CNAME fm3.pixor.net.dkim.fmhosted.com.
+
+
+; AT Protocol handle for Mike
+_atproto.mike 300 IN TXT "did=did:plc:dtf7zmcsjtwedsdbdaxhfkrj"
+

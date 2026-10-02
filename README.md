@@ -2,6 +2,13 @@
 
 IaC for personal infrastructure (Hetzner Cloud, UpCloud), managed with Terramate + OpenTofu. NixOS hosts are declared in `flake.nix` and self-deploy from `main` via comin.
 
+## Legacy migration
+
+The Linode migration project starts with `epic3`, the legacy server that still
+provides DNS for personal email. See the [findings and migration scope](docs/migrations/legacy-linode/README.md),
+the [staged migration plan](docs/superpowers/plans/2026-10-02-legacy-linode-migration.md),
+and the [Bluesky handle runbook](docs/migrations/legacy-linode/bluesky-handle.md).
+
 ## Architecture
 
 ```
