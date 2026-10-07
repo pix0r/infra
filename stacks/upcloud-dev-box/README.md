@@ -43,6 +43,71 @@ reach the fresh template. On the box, after first SSH: `claude` login and
 
 ## Reaching it
 
+### Private LifeData search (prepared 2026-10-07)
+
+`hosts/dev-box/personal-search.nix` declares an independent read-only browser/API
+service. It listens on loopback port 8765; it does not start the orchestrator.
+The condition skips startup until its code checkout exists. Nix supplies Python
+and PyYAML; there is no dependency on a temporary cloud-workspace virtualenv.
+
+| Data | Durable location |
+|---|---|
+| Curated/searchable notes | `/data/lifedata/brain` (dedicated read mirror of private `pix0r/brain`; authored changes go through existing Git/Obsidian workflows) |
+| Future private original exports | `/data/lifedata/archive` (outside Git and currently **not ingested**; inaccessible to search service) |
+| Rebuildable private index | `/data/lifedata/index/search.sqlite` |
+| Service config | This repository's NixOS module |
+
+After reviewing/landing brain PR #11 and this infra change, perform setup from an
+authorized laptop/server session. This managed Codex workspace currently has no
+server credentials, VPN or permitted outbound TCP route; preparing these files
+does not deploy the dataset or prove the server is healthy.
+
+As `dev`, check `findmnt /data`, `tailscale status`, and GitHub read access before
+setup. Confirm the `/data` backup job and test restoration separately; provider
+volume backups do not prove application recovery or a desired encryption policy.
+If an existing `/data/lifedata/brain` checkout exists, inspect its branch and
+working tree instead of overwriting it.
+
+```bash
+mkdir -p /data/lifedata
+git clone https://github.com/pix0r/brain.git /data/lifedata/brain
+sudo systemctl start personal-search
+systemctl status personal-search --no-pager
+curl --fail http://127.0.0.1:8765/api/status
+sudo tailscale serve status
+```
+
+The clone command above assumes brain PR #11 has landed on main and the host's
+existing GitHub authorization works. To validate the draft first, explicitly clone
+`--branch claude/life-os-recovery-2026-10-07`; switch this dedicated mirror to main
+after merge. Do not switch the existing agent working checkout to deploy search.
+
+If HTTPS port 8443 is unused in `tailscale serve status`, enable a private URL
+without replacing an existing port-443 app:
+
+```bash
+sudo tailscale serve --bg --https=8443 http://127.0.0.1:8765
+```
+
+Open the **actual URL printed by that command**, from a laptop/phone signed into
+the permitted tailnet. This uses Serve, not public Funnel. Restrict access with
+tailnet grants/ACLs if the tailnet includes other users/devices. The service accepts
+the server's exact Tailscale DNS name on port 8443; restart it after Tailscale first
+connects or the DNS name changes. `tailscale serve` state already persists through
+the existing `/data/tailscale` bind mount. This setup has not been remotely run.
+
+For laptop-only temporary access before Serve is configured, use
+`ssh -N -L 8765:127.0.0.1:8765 dev@<verified-server-address>` and open
+`http://127.0.0.1:8765` **on that laptop**. SSH target/identity must come from the
+existing infrastructure outputs or tailnet, not a stale note's IP.
+
+Updates are explicit initially: in the dedicated clean mirror, `git pull --ff-only`,
+then `sudo systemctl restart personal-search`. Restart rebuilds the index atomically.
+The browser exposes counts/index date and labels source freshness as unverified.
+There is no automatic source fetch or ChatGPT ingestion. If rebuilding fails,
+the prior index survives, but service startup fails visibly; inspect the service
+journal before retrying. Export deletion propagates when the index is rebuilt.
+
 - Public name: **`dev-box.matz.io`** (Route 53 A record, TTL 60, follows the IP through
   replacements). `ssh dev@dev-box.matz.io`. Add to `~/.ssh/config` on the laptop:
   `Host dev` / `HostName dev-box.matz.io` / `User dev`.
