@@ -91,6 +91,8 @@ in
   # ---- Tooling -------------------------------------------------------------------
   environment.systemPackages = with pkgs; [
     git gh tmux mosh ripgrep jq htop neovim curl tree sqlite
+    # Playwright's Nix wrapper supplies compatible browsers and their libraries.
+    nodejs playwright-test
     beam.erlang beam.elixir_1_18
     pkgs-unstable.claude-code
     pkgs-unstable.codex # OpenAI Codex CLI; moves as fast as claude-code
