@@ -1,41 +1,74 @@
-# Private search workload. Dataset and index survive replacement on /data.
-# Provision the brain checkout as dev before enabling access; see stack README.
+# Private source is fetched at runtime, never copied into the world-readable store.
 { pkgs, ... }:
 let
   root = "/data/lifedata";
+  # Update this pin through a PR to deploy code AND the curated source snapshot.
+  revision = "1e7fe75582acf60261db52c0ec8ce393fd6078f3";
+  release = "${root}/releases/${revision}";
+  index = "${root}/index/${revision}.sqlite";
   python = pkgs.python3.withPackages (p: [ p.pyyaml ]);
+  provision = pkgs.writeShellScript "personal-search-provision"
+    (builtins.readFile ./personal-search-provision.sh);
   launch = pkgs.writeShellScript "personal-search" ''
     set -euo pipefail
-    dns_name="$(${pkgs.tailscale}/bin/tailscale status --json | ${pkgs.jq}/bin/jq -r '.Self.DNSName // empty | rtrimstr(".")' || true)"
-    proxy_args=()
-    if [ -n "$dns_name" ]; then
-      proxy_args+=(--allowed-host "$dns_name:8443")
-    fi
-    exec ${python}/bin/python ${root}/brain/scripts/personal_search_web.py \
-      --brain ${root}/brain --index ${root}/index/search.sqlite "''${proxy_args[@]}"
+    dns_name="$(${pkgs.tailscale}/bin/tailscale status --json | ${pkgs.jq}/bin/jq -er '.Self.DNSName | select(length > 0) | rtrimstr(".")')"
+    exec ${python}/bin/python ${release}/scripts/personal_search_web.py \
+      --brain ${release} --index ${index} --allowed-host "$dns_name:8443"
   '';
 in
 {
   systemd.tmpfiles.rules = [
     "d ${root} 0750 dev users -"
     "d ${root}/archive 0700 dev users -"
+    "d ${root}/releases 0700 dev users -"
     "d ${root}/index 0700 dev users -"
   ];
+
+  systemd.services.personal-search-prepare = {
+    description = "Provision pinned private LifeData source and index";
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    before = [ "personal-search.service" ];
+    partOf = [ "personal-search.service" ];
+    unitConfig.RequiresMountsFor = root;
+    path = [ pkgs.git pkgs.coreutils ];
+    environment = {
+      HOME = "/data/home/dev";
+      GH_CONFIG_DIR = "/data/home/dev/.config/gh";
+      GIT_CONFIG_COUNT = "1";
+      GIT_CONFIG_KEY_0 = "credential.helper";
+      GIT_CONFIG_VALUE_0 = "!${pkgs.gh}/bin/gh auth git-credential";
+      PYTHONDONTWRITEBYTECODE = "1";
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      User = "dev";
+      Group = "users";
+      ExecStart = "${provision} ${root} https://github.com/pix0r/brain.git ${revision} ${python}/bin/python";
+      TimeoutStartSec = "5min";
+      UMask = "0077";
+      NoNewPrivileges = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      PrivateTmp = true;
+      ReadWritePaths = [ "${root}/releases" "${root}/index" ];
+      InaccessiblePaths = [ "${root}/archive" ];
+    };
+  };
 
   systemd.services.personal-search = {
     description = "Private LifeData browser and read-only search API";
     wantedBy = [ "multi-user.target" ];
-    after = [ "tailscaled.service" ];
-    unitConfig = {
-      RequiresMountsFor = root;
-      ConditionPathExists = "${root}/brain/scripts/personal_search_web.py";
-    };
+    wants = [ "personal-search-https.service" ];
+    requires = [ "personal-search-prepare.service" "tailscaled.service" ];
+    after = [ "personal-search-prepare.service" "tailscaled.service" ];
+    unitConfig.RequiresMountsFor = root;
     environment.PYTHONDONTWRITEBYTECODE = "1";
     serviceConfig = {
       User = "dev";
       Group = "users";
-      WorkingDirectory = "${root}/brain";
-      ExecStartPre = "${python}/bin/python ${root}/brain/scripts/personal_search.py --brain ${root}/brain --index ${root}/index/search.sqlite index";
+      WorkingDirectory = release;
       ExecStart = launch;
       Restart = "on-failure";
       RestartSec = "10s";
@@ -44,9 +77,25 @@ in
       ProtectSystem = "strict";
       ProtectHome = true;
       PrivateTmp = true;
-      ReadWritePaths = [ "${root}/index" ];
-      InaccessiblePaths = [ "${root}/archive" ];
+      InaccessiblePaths = [ "${root}/archive" "/data/home/dev" ];
     };
   };
-  # Listener stays on 127.0.0.1. No public firewall ports and no agent dispatch.
+
+  # Own only HTTPS 8443. Other Serve endpoints are left alone; never enable Funnel.
+  systemd.services.personal-search-https = {
+    description = "Private Tailscale HTTPS for LifeData search";
+    wantedBy = [ "multi-user.target" ];
+    requires = [ "tailscaled.service" "personal-search.service" ];
+    after = [ "tailscaled.service" "personal-search.service" ];
+    partOf = [ "personal-search.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.tailscale}/bin/tailscale serve --yes --bg --https=8443 http://127.0.0.1:8765";
+      ExecStop = "${pkgs.tailscale}/bin/tailscale serve --yes --https=8443 off";
+      TimeoutStartSec = "30s";
+      Restart = "on-failure";
+      RestartSec = "10s";
+    };
+  };
 }
