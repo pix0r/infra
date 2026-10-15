@@ -12,7 +12,7 @@ let
   beam = pkgs.beam.packages.erlang_27;
 in
 {
-  imports = [ ./personal-search.nix ];
+  imports = [ ./personal-search.nix ./personal-search-live.nix ];
   networking.hostName = "dev-box"; # comin deploys nixosConfigurations.<hostName>
   time.timeZone = "UTC";
   system.stateVersion = "26.05"; # never change after first deploy

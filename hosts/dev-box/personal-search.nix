@@ -64,7 +64,10 @@ in
     requires = [ "personal-search-prepare.service" "tailscaled.service" ];
     after = [ "personal-search-prepare.service" "tailscaled.service" ];
     unitConfig.RequiresMountsFor = root;
-    environment.PYTHONDONTWRITEBYTECODE = "1";
+    environment = {
+      PYTHONDONTWRITEBYTECODE = "1";
+      SEARCH_INDEX = index; # Shared with the side-by-side LiveView comparison.
+    };
     serviceConfig = {
       User = "dev";
       Group = "users";
