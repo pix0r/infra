@@ -43,6 +43,74 @@ reach the fresh template. On the box, after first SSH: `claude` login and
 
 ## Reaching it
 
+### Private LifeData search
+
+`hosts/dev-box/personal-search.nix` owns deployment end to end. Merge a reviewed
+change to `main`; comin applies it. No manual clone, package installation, index
+command or Serve command is needed. The module pins a full brain commit SHA;
+code and searchable notes deploy together as that snapshot. It does not start
+the orchestrator or ingest ChatGPT/raw archives.
+
+The deployment consists of three ordered units:
+
+1. `personal-search-prepare` fetches the pinned private commit into a new release
+   directory, verifies it, and builds its index. Fetches use `dev`'s existing
+   persistent GitHub CLI authorization at `/data/home/dev/.config/gh`, via an
+   explicit Git credential helper. Credentials and private notes never enter the
+   Nix store. A fresh host needs that authorization and its existing Tailscale
+   enrollment; neither is silently recreated by this module.
+2. `personal-search` serves that exact release/index on `127.0.0.1:8765`. Its
+   filesystem is read-only, and both the raw archive and dev's home (including
+   GitHub credentials) are inaccessible. Nix supplies Python and PyYAML.
+3. `personal-search-https` manages private Tailscale Serve on HTTPS port 8443.
+   Stopping it removes only that endpoint. It does not enable public Funnel or
+   change other Serve ports. HTTPS must be enabled for the tailnet; if Tailscale
+   requests administrator authorization, follow the link in the unit journal.
+
+| Data | Durable location |
+|---|---|
+| Pinned source releases | `/data/lifedata/releases/<brain-commit>` |
+| Future private original exports, not ingested | `/data/lifedata/archive` |
+| Rebuildable private indexes | `/data/lifedata/index/<brain-commit>.sqlite` |
+| Runtime configuration and source pin | `hosts/dev-box/personal-search.nix` |
+
+Author changes in the normal brain/Obsidian workflows, not the deployed releases.
+For updates, land brain changes, then change `revision` in the infra module and
+merge its PR. For rollback, revert that pin through infra. Old releases and their
+indexes are retained; cached releases can restart/rebuild without GitHub access.
+An unavailable revision, modified release, or failed index build fails deployment
+visibly. Existing revisions/indexes survive; this is not automatic rollback of a
+failed NixOS switch. Revert the pin to recover. A service restart also reruns
+preparation. Deletion takes effect in the new index, but retained old releases and
+volume backups still hold older data until explicitly removed.
+
+Inspect the deployed state:
+
+```bash
+systemctl status personal-search-prepare personal-search personal-search-https --no-pager
+journalctl -u personal-search-prepare -u personal-search -u personal-search-https -n 50
+curl --fail http://127.0.0.1:8765/api/status
+sudo tailscale serve status
+```
+
+Use the URL printed by Serve from a laptop/phone on the permitted tailnet.
+The current node's expected address is
+`https://dev-box.macaroni-walleye.ts.net:8443`. Tailnet grants/ACLs determine who
+can connect. Restart `personal-search` after a Tailscale DNS-name change.
+For temporary access without Serve, use
+`ssh -N -L 8765:127.0.0.1:8765 dev@dev-box.matz.io` and open
+`http://127.0.0.1:8765` on the laptop.
+
+The browser reports index date and counts; source freshness remains unverified.
+Changing the pin is an explicit source refresh, not automatic capture from Roam.
+The persistent volume has provider backups; an application restore remains a
+separate verification.
+
+Test provisioning with a clean brain checkout and Python containing PyYAML:
+`bash tests/personal-search-provision.sh /path/to/brain /path/to/python`.
+This uses a temporary local Git repository to check initial provisioning, updates,
+offline rollback, failed fetches and refusal to overwrite edited releases.
+
 - Public name: **`dev-box.matz.io`** (Route 53 A record, TTL 60, follows the IP through
   replacements). `ssh dev@dev-box.matz.io`. Add to `~/.ssh/config` on the laptop:
   `Host dev` / `HostName dev-box.matz.io` / `User dev`.
