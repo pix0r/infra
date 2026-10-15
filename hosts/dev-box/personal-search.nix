@@ -3,7 +3,7 @@
 let
   root = "/data/lifedata";
   # Update this pin through a PR to deploy code AND the curated source snapshot.
-  revision = "1e7fe75582acf60261db52c0ec8ce393fd6078f3";
+  revision = "ab210e68aa6bb9b468c5d9545a9e73592c8a85bb";
   release = "${root}/releases/${revision}";
   index = "${root}/index/${revision}.sqlite";
   python = pkgs.python3.withPackages (p: [ p.pyyaml ]);
