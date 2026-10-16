@@ -1,6 +1,9 @@
 # Hosting plan: where things run
 
-Updated October 16, 2026. Proposal for review; nothing has been deployed.
+Updated October 16, 2026. **Paused candidate, not the selected architecture.**
+We are comparing simpler and managed alternatives in the
+[hosting options research](../../research/2026-10-16-hosting-options.md).
+Nothing has been deployed. The layout below describes the Kubernetes option only.
 
 ## Compute comes from UpCloud virtual servers
 
@@ -10,8 +13,8 @@ a VPS. Several apps can share a VM. Kubernetes places and restarts their
 containers; an autoscaler requests additional VMs from UpCloud when needed.
 
 UpCloud runs the Kubernetes management service, called the control plane.
-We configure the apps, scaling, networking, and storage. This is my recommended
-starting point; we have not committed to a provider or bought capacity.
+We would configure the apps, scaling, networking, and storage. This is one
+candidate architecture; we have not committed to a provider or bought capacity.
 
 ## What runs where
 
