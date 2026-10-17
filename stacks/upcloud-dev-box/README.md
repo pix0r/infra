@@ -15,6 +15,15 @@ reboots. ~5 min. From then on comin polls `main` every 60 s.
 
 The server is cattle; `/data` is the pet (daily backups, 7 kept, `prevent_destroy`).
 
+## Storage capacity and recovery
+
+Home directories, Rust build output, Docker, and LifeData share `/data`; free
+space on `/` does not prevent this volume from filling. See
+[storage recovery](storage-recovery.md) for targeted build cleanup, Docker
+inspection, and an optional online volume expansion. A provider disk expansion
+also needs filesystem growth inside the guest; the NixOS mount enables growth
+at the next mount, while a running host needs `resize2fs` after the disk grows.
+
 ## What you need
 
 | Credential | Where | Used for |

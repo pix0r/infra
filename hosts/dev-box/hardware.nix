@@ -19,6 +19,9 @@
     device = "/dev/disk/by-label/data";
     fsType = "ext4";
     neededForBoot = true;
+    # Use additional backing storage when /data is next mounted. For a live
+    # UpCloud expansion, also run resize2fs after the device reports its new size.
+    autoResize = true;
   };
 
   zramSwap.enable = true;
