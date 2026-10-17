@@ -15,7 +15,7 @@ resource "upcloud_server" "dev_box" {
   }
 
   storage_devices {
-    storage = upcloud_storage.data.id
+    storage = upcloud_storage.data_standard.id
     address = "virtio" # /dev/vdb on first boot; mounted by label thereafter
   }
 
