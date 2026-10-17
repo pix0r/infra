@@ -57,8 +57,8 @@ These resources must be itemized for cleanup; do not delete the source backup.
 
 ## Pending stages
 
-- B / PR #29: 50 GB Standard clone is online, detached and imported; adoption apply pending.
-- C / PR #30: reviewed attachment-only apply, filesystem/data/application checks.
+- B / PR #29: merged and deployed successfully; imported replacement adopted without cloud changes.
+- C / PR #30: merged and deployed; replacement attached and post-boot checks passed.
 - D / PR #31: subsequent Simple Backup Week apply.
 - E: completed scheduled root/data backups, isolated application recovery proof,
   then a separately reviewed itemized legacy/test-resource cleanup proposal.
@@ -76,7 +76,7 @@ These resources must be itemized for cleanup; do not delete the source backup.
 - Detached Standard replacement clone: `019dbaf2-d708-4deb-9bde-cd222c4a912d`,
   title `dev-box-data-standard`, source the fresh stopped snapshot above.
 - Original disk is retained at 20 GB MaxIOPS with its Flexible rule and
-  destruction protection. No attachment swap has occurred yet.
+  destruction protection. It was detached by the later cutover below.
 - Preflight recovery clone is now detached and retained; helper has only its
   fresh Ubuntu root. It cannot accidentally mount both same-label clones.
 
@@ -89,6 +89,51 @@ attachments and no individual backup rule. Original disk and stopped snapshot
 remain unchanged. Import into `upcloud_storage.data_standard` succeeded while the VM remained
 stopped. The refreshed adoption plan shows only runner-local bootstrap-key creation:
 1 add, 0 change, 0 destroy, with both disks, server and bootstrap no-op.
-Independent review found no cloud-safety blockers. Final-head CI and merge
-remain the gate before the separate adoption apply. No attachment change has
-occurred.
+Independent review found no cloud-safety blockers. PR #29 merged at 22:31:46,
+main `0090db676933081036a2b0a67d9804ea8ce67220`; deployment `39075443591`
+succeeded with the VM still stopped and the original disk still attached.
+
+
+## Attachment cutover — completed 2026-10-17
+
+- PR #30 merged at 22:39:39, main `d0090a779ea95e23ccc688a4798f759401b3e24a`.
+- Final refreshed plan: local bootstrap-key creation plus one in-place server
+  update changing only storage_devices; no disk/server replacement, root,
+  bootstrap, user-data or backup-policy changes.
+- Provider detached original data, attached the replacement at virtio:1, and
+  started the VM. Root remains `01da1960-0299-4fef-8739-2bfb10aad259` at virtio:0.
+- Initial deploy `39075974339` completed the cloud operation but reported an
+  inconsistent computed `.host` value (stopped host 0 versus running physical
+  host). Refreshed main plan had no cloud changes; retry attempt 2 succeeded.
+- Boot journal at 22:41:06 confirms automatic ext4 growth to 50 GiB.
+  `/data` reports 52,655,996,928 filesystem bytes, with about 36.2 GB available.
+  Label `data` and UUID `9e4a70f4-bf84-431b-8842-9fd92eef5817` are unchanged.
+- SSH verified at 22:41:57; writers were stopped beginning about 22:19
+  (quiesced manifest 22:20:41). PostgreSQL was explicitly restarted afterward
+  because its intentional pre-maintenance stop persists across boot.
+- Eight repository heads/statuses and all captured uncommitted-file hashes,
+  modes and owners exactly match the quiesced baseline. Directory metadata
+  matches. Six Codex and two LifeData SQLite databases pass quick_check.
+- All 324 baseline Codex thread IDs survive; post-boot count 325. An existing
+  remote conversation was read successfully through the desktop connector.
+- Docker root remains /data/docker. Previously running surf-atlas-postgres-1
+  is healthy; the two previously stopped containers remain stopped. PostgreSQL
+  opens postgres, surf_atlas_dev and surf_atlas_test with expected schema counts
+  0/8/8; representative live tables contain rows.
+- LifeData Python counts match: atlas 35, roam 11094, session 519. LiveView
+  returns HTTP 200. Both HTTPS units and comin are active. Tailscale retains
+  its node ID, DNS name and 100.103.219.13 address.
+- API confirms replacement 50 GB Standard attached, original 20 GB MaxIOPS
+  detached, and Simple Backup still disabled. The new data disk and root have
+  no individual backup rules; original Flexible daily/7/0900 remains on the
+  detached legacy disk only.
+
+## Backup and recovery checkpoint
+
+Stage D enables server Simple Backup Week at 0900 UTC in a separate apply.
+The first scheduled cycle after activation is expected 2026-10-18 09:00 UTC
+(02:00 PDT). A completed root/data backup and isolated full-filesystem and
+application restore remain required; activation or a backup listing is not
+completion. Preserve the old disk, fresh stopped snapshot, tested preflight
+clone and helper until this checkpoint passes. Cleanup is a separate itemized
+proposal and must preserve the active recovery policy.
