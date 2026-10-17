@@ -3,7 +3,9 @@
 Updated October 16, 2026. **Agreed direction:** Kubernetes, Docker, Helm,
 GitHub Actions, and Argo CD. The shared chart is optional. Nothing has been deployed.
 [Alternatives research](../../research/2026-10-16-hosting-options.md) records the
-comparison preceding this decision. Provider choice and cost validation remain open.
+comparison preceding this decision. The [cost model](../../research/2026-10-16-kubernetes-cost-model.md)
+recommends UpCloud at about $78/month including reserve; provisioning and measured
+capacity validation remain outstanding.
 
 ## What each application owns
 
@@ -50,7 +52,7 @@ candidate architecture; we have not committed to a provider or bought capacity.
 | Resource | Location | When it runs |
 | --- | --- | --- |
 | Existing dev box | Its existing UpCloud VM | As today; separate from production |
-| Production apps | Start with one new UpCloud worker VM | Always; allow a second VM when needed |
+| Production apps | Start with one new 4-CPU/16-GB UpCloud Starter worker VM | Always; allow a second VM when needed within budget |
 | Dashboard and monitoring | On production worker VMs | Always; private access |
 | PR previews | A separate temporary UpCloud Kubernetes cluster, initially one worker VM shared by previews | Created for requested previews; deleted after the last one expires |
 | QA / staging | Another temporary UpCloud cluster, initially one or two worker VMs | Only during release, upgrade, or load tests |
@@ -60,7 +62,8 @@ candidate architecture; we have not committed to a provider or bought capacity.
 So the ordinary footprint is **the existing dev box plus one production VM**,
 with UpCloud also hosting the control plane. Preview and QA servers add temporary
 costs. They are separate so a broken infrastructure test cannot take down production
-or interrupt an active preview. Region and VM sizes still need pricing and testing.
+or interrupt an active preview. San Jose and a 4-CPU/16-GB Starter worker are now
+priced; account availability and measured capacity still need validation.
 
 App domains point to an UpCloud load balancer, which sends requests to the right
 app on the worker VMs, with automated TLS. Use Argo CD for deployment visibility
@@ -104,9 +107,11 @@ before relying on the platform for durable data.
 
 ## Cost and the remaining decisions
 
-The **$100–150/month ceiling includes everything**, including the dev box, legacy
-hosting, disks, backups, networking, and temporary tests. The earlier budget split
-was an allocation, not a verified quote; it did not establish that this fits.
+The revised ceiling is **under $100/month for the new platform**, excluding the
+existing dev box and legacy Linodes. The [cost model](../../research/2026-10-16-kubernetes-cost-model.md)
+uses current public rates: about $63 before tax/reserve, or $78 with reserve,
+including explicit temporary-use and second-worker allowances. This is not an
+invoice or measured benchmark. Sustained scaling changes the budget.
 
 UpCloud offers a free Development control plane, but charges for worker VMs.
 That free plan has no high availability. Starting with it and one worker is the
@@ -114,11 +119,12 @@ low-cost option; it does not promise uninterrupted service. We need to price the
 availability alternatives before choosing. More workers alone do not make the
 database or control plane resilient.
 
-Next: inventory the actual existing bill, price the VMs and supporting services,
-and measure whether the dashboard/scaling stack fits a small worker. Validate
+Select the free Essentials LB/NAT plans explicitly; defaults can incur charges.
+Next: plan a temporary pilot within the QA allowance, check account availability,
+and measure the proposed stack there before committing permanent capacity. Validate
 deploy, preview, promotion, rollback, restore, and cleanup for one app. Adding a
 second ordinary app should require settings and a push, not a new infra project.
-Then agree on cost and acceptable downtime before provisioning. Self-managed k3s on UpCloud
+Then confirm cost and acceptable downtime before permanent deployment. Self-managed k3s on UpCloud
 VMs remains an alternative if managed Kubernetes does not fit; we would then also
 operate the control plane and arrange automatic VM creation ourselves.
 

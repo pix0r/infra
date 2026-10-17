@@ -3,8 +3,10 @@
 Research date: October 16, 2026. This comparison preceded the decision to use
 Kubernetes with Docker, Helm, GitHub Actions, and Argo CD. See the
 [current design](../superpowers/specs/2026-10-15-kubernetes-hosting-design.md).
-Provider choice and budget validation remain open. Recommendations below record
-the research-stage shortlist, rather than the subsequent tooling decision.
+The subsequent [cost model](2026-10-16-kubernetes-cost-model.md) uses the revised
+budget: under $100/month for new infrastructure, excluding dev box and legacy
+hosting. Recommendations below record the research-stage shortlist and original
+budget scope, rather than the subsequent tooling decision.
 
 **Recommendation: compare an existing self-hosted PaaS with a managed PaaS before
 building a Kubernetes platform.** Kubernetes remains a candidate when automatic
