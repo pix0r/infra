@@ -31,3 +31,19 @@ run "replacement_defaults_do_not_mutate_original_disk" {
     error_message = "Keep the original disk's rollback backups until recovery is tested."
   }
 }
+
+run "replacement_is_independent_unbacked_standard_storage" {
+  command = plan
+  assert {
+    condition     = var.data_size == 50 && var.data_tier == "standard"
+    error_message = "The desired replacement must default to 50 GB Standard."
+  }
+  assert {
+    condition     = upcloud_storage.data_standard.size == 50 && upcloud_storage.data_standard.tier == "standard"
+    error_message = "Adopt the detached replacement as its own normal storage resource."
+  }
+  assert {
+    condition     = length(upcloud_storage.data_standard.backup_rule) == 0 && length(upcloud_storage.data_standard.clone) == 0
+    error_message = "Use normal imported storage without per-disk backup rules or replacement-triggering clone provenance."
+  }
+}

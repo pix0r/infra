@@ -22,3 +22,21 @@ resource "upcloud_storage" "data" {
     prevent_destroy = true
   }
 }
+
+# Import the completed detached API clone before merging this stage.
+# No clone block: deleting the source snapshot must not replace this disk.
+resource "upcloud_storage" "data_standard" {
+  title = "${var.hostname}-data-standard"
+  size  = var.data_size
+  tier  = var.data_tier
+  zone  = var.zone
+
+  labels = {
+    role       = "dev-box"
+    managed_by = "tofu"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
