@@ -59,7 +59,7 @@ These resources must be itemized for cleanup; do not delete the source backup.
 
 - B / PR #29: merged and deployed successfully; imported replacement adopted without cloud changes.
 - C / PR #30: merged and deployed; replacement attached and post-boot checks passed.
-- D / PR #31: subsequent Simple Backup Week apply.
+- D / PR #31: merged and deployed successfully; Simple Backup Week active.
 - E: completed scheduled root/data backups, isolated application recovery proof,
   then a separately reviewed itemized legacy/test-resource cleanup proposal.
 
@@ -137,3 +137,31 @@ application restore remain required; activation or a backup listing is not
 completion. Preserve the old disk, fresh stopped snapshot, tested preflight
 clone and helper until this checkpoint passes. Cleanup is a separate itemized
 proposal and must preserve the active recovery policy.
+
+
+## Simple Backup activation — completed 2026-10-17
+
+- PR #31 merged at 22:46:15; main `5a1f2d457bb008bf8b8da5c3ad2b7884d17e485a`.
+- Terraform Deploy `39076404101` succeeded. API confirms server started and
+  `simple_backup=0900,dailies`. Both active 50 GB Standard disks are covered.
+- Before activation, root and replacement had no individual rules. After
+  activation, the storage API reports the policy-derived daily/7/0900 rule
+  on both; these are managed through server Simple Backup, not independently
+  configured Flexible rules. The post-deploy refreshed plan has no cloud
+  changes (only the local bootstrap-key file needs creation on this machine).
+- At 22:47 UTC both new-policy backup lists were empty: no completed scheduled
+  recovery point exists yet. Do not claim the final restore checkpoint passed.
+- At 22:47:44 production SSH, Docker/PostgreSQL health, Tailscale and both
+  search services remain healthy.
+- User authorized a one-time follow-up in this chat at 2026-10-18 02:15 PDT
+  (09:15 UTC). Active automation: `verify-dev-box-scheduled-backup-recovery`.
+  It must verify same-cycle root and data completion, then test isolated OS
+  boot and application/database recovery. Production stays online.
+- Verification evidence continues on branch `codex/dev-box-recovery-verification`;
+  publish the completed restore results together after the scheduled test.
+- Interim estimated run rate remains $58.99/month plus temporary recovery
+  resources (~$0.013096/hour for the current helper and retained 20 GB test
+  clone). Target after separately reviewed legacy cleanup is $44.42/month,
+  excluding tax and unchanged shared AWS services. Retained backup sizes and
+  later full-size restore clones may change temporary costs; inventory again
+  before cleanup. No legacy or recovery resource was deleted.
