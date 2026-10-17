@@ -37,13 +37,13 @@ variable "root_size" {
 variable "data_size" {
   description = "Desired replacement /data storage GB; the retained original disk is fixed independently."
   type        = number
-  default     = 20
+  default     = 50
 }
 
 variable "data_tier" {
   description = "Desired replacement /data storage tier; changing a managed disk tier requires replacement."
   type        = string
-  default     = "maxiops"
+  default     = "standard"
 }
 
 variable "github_user" {
