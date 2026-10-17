@@ -1,0 +1,37 @@
+diff --git a/stacks/upcloud-dev-box/server.tf b/stacks/upcloud-dev-box/server.tf
+--- a/stacks/upcloud-dev-box/server.tf
++++ b/stacks/upcloud-dev-box/server.tf
+@@ -17,6 +17,12 @@
+   storage_devices {
+     storage = upcloud_storage.data_standard.id
+     address = "virtio" # /dev/vdb on first boot; mounted by label thereafter
++  }
++
++  # Enabled only after the attachment-cutover apply is complete and verified.
++  simple_backup {
++    plan = "dailies"
++    time = "0900"
+   }
+ 
+   network_interface {
+diff --git a/stacks/upcloud-dev-box/tests/storage.tftest.hcl b/stacks/upcloud-dev-box/tests/storage.tftest.hcl
+--- a/stacks/upcloud-dev-box/tests/storage.tftest.hcl
++++ b/stacks/upcloud-dev-box/tests/storage.tftest.hcl
+@@ -72,7 +72,15 @@
+     error_message = "Recovery outputs must distinguish the active and detached original disk."
+   }
+   assert {
+-    condition     = length(upcloud_server.dev_box[0].simple_backup) == 0
+-    error_message = "Simple Backup must be a later completed apply after detaching the Flexible-backed disk."
++    condition     = length(upcloud_server.dev_box[0].simple_backup) == 1 && one(upcloud_server.dev_box[0].simple_backup).plan == "dailies" && one(upcloud_server.dev_box[0].simple_backup).time == "0900"
++    error_message = "After cutover, use Simple Backup Week at 09:00 UTC."
+   }
+ }
++
++run "simple_backup_has_no_attached_individual_rules" {
++  command = plan
++  assert {
++    condition     = length(upcloud_storage.data_standard.backup_rule) == 0 && length(upcloud_server.dev_box[0].template[0].backup_rule) == 0
++    error_message = "No disk attached to Simple Backup may carry an individual backup rule."
++  }
++}

@@ -1,0 +1,68 @@
+diff --git a/stacks/upcloud-dev-box/server.tf b/stacks/upcloud-dev-box/server.tf
+--- a/stacks/upcloud-dev-box/server.tf
++++ b/stacks/upcloud-dev-box/server.tf
+@@ -15,7 +15,7 @@
+   }
+ 
+   storage_devices {
+-    storage = upcloud_storage.data.id
++    storage = upcloud_storage.data_standard.id
+     address = "virtio" # /dev/vdb on first boot; mounted by label thereafter
+   }
+ 
+diff --git a/stacks/upcloud-dev-box/outputs.tf b/stacks/upcloud-dev-box/outputs.tf
+--- a/stacks/upcloud-dev-box/outputs.tf
++++ b/stacks/upcloud-dev-box/outputs.tf
+@@ -20,10 +20,15 @@
+ 
+ output "data_storage_id" {
+   description = "UUID of the persistent /data storage"
+-  value       = upcloud_storage.data.id
++  value       = upcloud_storage.data_standard.id
+ }
+ 
+ output "fqdn" {
+   description = "Public DNS name of the box (null when disabled)"
+   value       = one(aws_route53_record.dev_box[*].fqdn)
+ }
++
++output "legacy_data_storage_id" {
++  description = "Detached original /data disk retained for rollback; do not attach alongside its clone"
++  value       = upcloud_storage.data.id
++}
+diff --git a/stacks/upcloud-dev-box/tests/storage.tftest.hcl b/stacks/upcloud-dev-box/tests/storage.tftest.hcl
+--- a/stacks/upcloud-dev-box/tests/storage.tftest.hcl
++++ b/stacks/upcloud-dev-box/tests/storage.tftest.hcl
+@@ -47,3 +47,32 @@
+     error_message = "Use normal imported storage without per-disk backup rules or replacement-triggering clone provenance."
+   }
+ }
++
++override_resource {
++  target = upcloud_storage.data
++  values = {
++    id = "012ff8f3-fd54-42d5-9634-3eea56db0ca8"
++  }
++}
++override_resource {
++  target = upcloud_storage.data_standard
++  values = {
++    id = "01000000-0000-4000-8000-000000000050"
++  }
++}
++
++run "cutover_attaches_only_replacement_and_preserves_rollback_output" {
++  command = plan
++  assert {
++    condition     = length(upcloud_server.dev_box[0].storage_devices) == 1 && one(upcloud_server.dev_box[0].storage_devices).storage == upcloud_storage.data_standard.id
++    error_message = "Attach exactly the prepared replacement; never both same-label clones."
++  }
++  assert {
++    condition     = output.data_storage_id == upcloud_storage.data_standard.id && output.legacy_data_storage_id == upcloud_storage.data.id
++    error_message = "Recovery outputs must distinguish the active and detached original disk."
++  }
++  assert {
++    condition     = length(upcloud_server.dev_box[0].simple_backup) == 0
++    error_message = "Simple Backup must be a later completed apply after detaching the Flexible-backed disk."
++  }
++}

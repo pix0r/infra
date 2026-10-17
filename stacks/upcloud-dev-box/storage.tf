@@ -2,9 +2,10 @@
 # Mounted at /data by hosts/dev-box/hardware.nix (by label; label set by cloud-init).
 resource "upcloud_storage" "data" {
   title = "${var.hostname}-data"
-  size  = var.data_size
-  tier  = var.data_tier
-  zone  = var.zone
+  # Original disk: do not tie these to replacement defaults. Tier changes replace.
+  size = 20
+  tier = "maxiops"
+  zone = var.zone
 
   backup_rule {
     interval  = "daily"

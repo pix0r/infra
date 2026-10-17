@@ -61,45 +61,30 @@ full builds can consume the recovered space again. Review Outliner's two target
 locations and choose a consistent build location before adding automated
 deletion. Changes to build profiles or cache placement belong in that project.
 
-## Optional online expansion
+## Storage migration and disaster recovery
 
-The configured capacity remains 20 GB. If the normal working set needs more
-room after cleanup, change `data_size` in `variables.tf`, for example to 50 GB,
-through a reviewed PR. UpCloud permits growing an attached volume online, but
-it cannot be shrunk in place. Keep `prevent_destroy`, the storage tier, backup
-retention, and resource identity intact. Do not edit cloud-init to resize an
-existing volume; changing it replaces the server in this stack.
+The current 20 GB MaxIOPS disk is retained at its original settings with
+`prevent_destroy`. Desired replacement settings must never change that resource.
+See [the staged migration and recovery runbook](storage-migration.md) for the
+50 GB Standard replacement, reviewed attachment cutover, Simple Backup Week,
+isolated restore proof, actual account billing and rollback procedure.
 
-Before applying, verify a current usable backup and inspect the Terraform plan.
-The intended change is an in-place update to `upcloud_storage.data.size` with no
-server replacement or reinstall. Resolve unexpected drift before merging.
+Do not change the old disk's tier or remove destruction protection to accomplish
+this migration. Do not change cloud-init or disko to resize it. A block clone
+preserves the existing ext4 UUID/label, ownership and Docker metadata; the NixOS
+mount's `autoResize` grows ext4 on the new 50 GB backing device at boot.
 
-After Terraform applies, verify that the backing device actually grew, then
-expand the filesystem on the running host:
+For an independently reviewed future in-place expansion on the running host,
+verify the device's new size first, then run
+`sudo resize2fs /dev/disk/by-label/data`. There is no data partition, so no
+`growpart` step is needed. A comin switch does not resize an already-mounted
+filesystem. Keep UpCloud's separate `filesystem_autoresize` operation disabled.
 
-```bash
-findmnt -no SOURCE,FSTYPE /data
-lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINTS
-sudo resize2fs /dev/disk/by-label/data
-df -h /data
-```
-
-There is no partition on this data device, so no `growpart` step is needed.
-`fileSystems."/data".autoResize` handles growth when the filesystem is mounted
-again, such as at boot. A comin switch is not a substitute for the live
-`resize2fs` step: comin and Terraform deploy independently and `/data` is already
-mounted. Keep the provider's separate `filesystem_autoresize` operation off;
-it requires the attached server to be stopped.
-
-### Cost of retaining seven backups
-
-At published USD rates checked on 2026-10-17, MaxIOPS is $0.25/GB/month and
-each flexible backup is $0.06/GB/month based on the copied volume's size.
-With this stack's seven retained daily backups, a 20 to 50 GB expansion adds
-approximately $7.50/month of live storage and $12.60/month of backups, or
-**$20.10/month** once all seven backups have the new size. These estimates
-exclude taxes and temporary additional backups; verify account pricing before
-applying. Cleanup alone does not incur that expansion cost.
+Scheduled snapshots are crash-consistent. Recovery requires a tested clone and
+application/database checks, not just an online entry in a backup listing.
+Deleting the VM through `enabled=false` also deletes its root disk and ends
+Simple Backup rotation; retained copies become separately billed on-demand
+backups until deliberately deleted.
 
 ## References
 

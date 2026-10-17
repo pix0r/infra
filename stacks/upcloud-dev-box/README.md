@@ -1,6 +1,6 @@
 # upcloud-dev-box — NixOS box on UpCloud, deployed from git
 
-One server in **San Jose** (default plan `STARTER-4xCPU-8GB`, ~USD 26/mo) plus a persistent 20 GB storage
+One server in **San Jose** (default plan `STARTER-4xCPU-8GB`, ~USD 24/mo before storage/backups) plus a persistent 20 GB storage
 at `/data`. The OS is **NixOS, declared in `hosts/dev-box/` at the repo root**.
 
 | Layer | Owned by | Change it by |
@@ -20,7 +20,7 @@ The server is cattle; `/data` is the pet (daily backups, 7 kept, `prevent_destro
 Home directories, Rust build output, Docker, and LifeData share `/data`; free
 space on `/` does not prevent this volume from filling. See
 [storage recovery](storage-recovery.md) for targeted build cleanup, Docker
-inspection, and an optional online volume expansion. A provider disk expansion
+inspection, and the [staged Standard-storage migration](storage-migration.md). A provider disk expansion
 also needs filesystem growth inside the guest; the NixOS mount enables growth
 at the next mount, while a running host needs `resize2fs` after the disk grows.
 
@@ -133,7 +133,10 @@ offline rollback, failed fetches and refusal to overwrite edited releases.
 - **Add an Elixir app:** release under `/data/apps/<name>`, adapt the
   `systemd.services` pattern in `configuration.nix`.
 - **Bump nixpkgs:** `nix flake update` (Docker recipe below), commit `flake.lock`.
-- **Turn off:** PR with `enabled = false`, merge. Storage stays. **On:** flip back;
+- **Delete the VM:** PR with `enabled = false`, merge. This destroys the server
+  and root disk, preserves `/data`, and converts Simple Backups to billed
+  on-demand copies that require explicit cleanup. For maintenance, gracefully
+  power off through SSH/API instead. **Recreate:** flip back;
   new server, fresh install, same `/data`, same home dir.
 - **Reinstall from scratch:** `tofu apply -replace='upcloud_server.dev_box[0]'` (from CI:
   push a no-op change to `cloud-init/` — any change there replaces the server).
