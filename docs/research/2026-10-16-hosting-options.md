@@ -1,8 +1,10 @@
 # Hosting options in October 2026
 
-Research date: October 16, 2026. The earlier Kubernetes proposal is paused;
-no platform has been selected. This comparison covers hosting apps, PR previews,
-on-demand QA, dashboards, scaling, portability, and the total $100–150/month budget.
+Research date: October 16, 2026. This comparison preceded the decision to use
+Kubernetes with Docker, Helm, GitHub Actions, and Argo CD. See the
+[current design](../superpowers/specs/2026-10-15-kubernetes-hosting-design.md).
+Provider choice and budget validation remain open. Recommendations below record
+the research-stage shortlist, rather than the subsequent tooling decision.
 
 **Recommendation: compare an existing self-hosted PaaS with a managed PaaS before
 building a Kubernetes platform.** Kubernetes remains a candidate when automatic
