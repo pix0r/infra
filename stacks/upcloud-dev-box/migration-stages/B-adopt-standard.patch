@@ -1,0 +1,67 @@
+diff --git a/stacks/upcloud-dev-box/storage.tf b/stacks/upcloud-dev-box/storage.tf
+--- a/stacks/upcloud-dev-box/storage.tf
++++ b/stacks/upcloud-dev-box/storage.tf
+@@ -22,3 +22,21 @@
+     prevent_destroy = true
+   }
+ }
++
++# Import the completed detached API clone before merging this stage.
++# No clone block: deleting the source snapshot must not replace this disk.
++resource "upcloud_storage" "data_standard" {
++  title = "${var.hostname}-data-standard"
++  size  = var.data_size
++  tier  = var.data_tier
++  zone  = var.zone
++
++  labels = {
++    role       = "dev-box"
++    managed_by = "tofu"
++  }
++
++  lifecycle {
++    prevent_destroy = true
++  }
++}
+diff --git a/stacks/upcloud-dev-box/variables.tf b/stacks/upcloud-dev-box/variables.tf
+--- a/stacks/upcloud-dev-box/variables.tf
++++ b/stacks/upcloud-dev-box/variables.tf
+@@ -37,13 +37,13 @@
+ variable "data_size" {
+   description = "Desired replacement /data storage GB; the retained original disk is fixed independently."
+   type        = number
+-  default     = 20
++  default     = 50
+ }
+ 
+ variable "data_tier" {
+   description = "Desired replacement /data storage tier; changing a managed disk tier requires replacement."
+   type        = string
+-  default     = "maxiops"
++  default     = "standard"
+ }
+ 
+ variable "github_user" {
+diff --git a/stacks/upcloud-dev-box/tests/storage.tftest.hcl b/stacks/upcloud-dev-box/tests/storage.tftest.hcl
+--- a/stacks/upcloud-dev-box/tests/storage.tftest.hcl
++++ b/stacks/upcloud-dev-box/tests/storage.tftest.hcl
+@@ -31,3 +31,19 @@
+     error_message = "Keep the original disk's rollback backups until recovery is tested."
+   }
+ }
++
++run "replacement_is_independent_unbacked_standard_storage" {
++  command = plan
++  assert {
++    condition     = var.data_size == 50 && var.data_tier == "standard"
++    error_message = "The desired replacement must default to 50 GB Standard."
++  }
++  assert {
++    condition     = upcloud_storage.data_standard.size == 50 && upcloud_storage.data_standard.tier == "standard"
++    error_message = "Adopt the detached replacement as its own normal storage resource."
++  }
++  assert {
++    condition     = length(upcloud_storage.data_standard.backup_rule) == 0 && length(upcloud_storage.data_standard.clone) == 0
++    error_message = "Use normal imported storage without per-disk backup rules or replacement-triggering clone provenance."
++  }
++}

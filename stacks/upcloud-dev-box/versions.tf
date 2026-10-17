@@ -4,7 +4,7 @@ terraform {
   required_providers {
     upcloud = {
       source  = "UpCloudLtd/upcloud"
-      version = "~> 5.44"
+      version = "= 5.45.0" # Migration lifecycle verified against this exact version.
     }
     http = {
       source  = "hashicorp/http"

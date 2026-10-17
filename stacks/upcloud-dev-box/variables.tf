@@ -1,5 +1,5 @@
 variable "enabled" {
-  description = "Create the server (true) or destroy it (false). The /data storage persists either way. Flip and merge to turn the box on/off."
+  description = "Create the server (true) or destroy it (false). The /data storage persists either way. This is destruction, not a maintenance stop; Simple Backups become billed on-demand copies."
   type        = bool
   default     = true
 }
@@ -35,13 +35,13 @@ variable "root_size" {
 }
 
 variable "data_size" {
-  description = "Persistent /data storage GB (home dirs, repos, docker). Grows in place; never shrinks."
+  description = "Desired replacement /data storage GB; the retained original disk is fixed independently."
   type        = number
   default     = 20
 }
 
 variable "data_tier" {
-  description = "Storage tier for /data: maxiops (fast, ~USD 0.25/GB) or standard (~USD 0.10/GB)."
+  description = "Desired replacement /data storage tier; changing a managed disk tier requires replacement."
   type        = string
   default     = "maxiops"
 }
