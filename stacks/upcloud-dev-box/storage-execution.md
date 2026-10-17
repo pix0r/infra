@@ -10,7 +10,7 @@ No credentials, application content or private file manifests belong here.
 - Comin switch succeeded at 22:11:51; deployment `7ec0b20c-58cb-4f68-8375-6be60adcfffd`.
 - Live system: `/nix/store/ybpvcc6ka674qayl4g6hn6r5l81fqqs9-nixos-system-dev-box-26.05.20260914.c3eea5b`.
 - Live fstab: `/dev/disk/by-label/data /data ext4 x-systemd.growfs,x-initrd.mount 0 2`.
-- Original ext4 disk remains 20 GB and attached. No production shutdown/cutover yet.
+- Original ext4 disk remains 20 GB and attached; the later maintenance actions are recorded below.
 
 ## Private baseline — captured while production is online
 
@@ -57,8 +57,35 @@ These resources must be itemized for cleanup; do not delete the source backup.
 
 ## Pending stages
 
-- B / PR #29: stopped snapshot, Standard clone, 50 GB growth, import and completed apply.
+- B / PR #29: clone is being prepared; grow/import and completed apply still required.
 - C / PR #30: reviewed attachment-only apply, filesystem/data/application checks.
 - D / PR #31: subsequent Simple Backup Week apply.
 - E: completed scheduled root/data backups, isolated application recovery proof,
   then a separately reviewed itemized legacy/test-resource cleanup proposal.
+
+## Maintenance and fresh snapshot — 2026-10-17
+
+- Writers stopped beginning about 22:19 UTC: comin, both search services,
+  PostgreSQL 17 (graceful Docker stop), Docker/socket and Tailscale. Remaining
+  dev-user agent sessions were terminated before the final manifest and sync.
+- Quiesced baseline: 8 repositories, 324 Codex threads; all SQLite checks `ok`.
+- Guest power-off requested, then UpCloud confirmed `stopped` before snapshot.
+- Fresh on-demand snapshot: `01179612-bef1-4367-9ef4-a21d172aa10d`, title
+  `dev-box-pre-standard-20261017T222204Z`, created 22:22:05 UTC, 20 GB, origin
+  `012ff8f3-fd54-42d5-9634-3eea56db0ca8`.
+- Detached Standard replacement clone: `019dbaf2-d708-4deb-9bde-cd222c4a912d`,
+  title `dev-box-data-standard`, source the fresh stopped snapshot above.
+- Original disk is retained at 20 GB MaxIOPS with its Flexible rule and
+  destruction protection. No attachment swap has occurred yet.
+- Preflight recovery clone is now detached and retained; helper has only its
+  fresh Ubuntu root. It cannot accidentally mount both same-label clones.
+
+## Replacement preparation
+
+The replacement completed synchronization and was grown detached to 50 GB.
+The resize API response timed out, so its outcome was checked with GET rather
+than retrying the mutation: UpCloud confirmed 50 GB Standard, online, no server
+attachments and no individual backup rule. Original disk and stopped snapshot
+remain unchanged. Import into `upcloud_storage.data_standard` succeeded while the VM remained
+stopped. The refreshed adoption plan is being verified before PR #29 is made
+ready. No attachment change has occurred.
