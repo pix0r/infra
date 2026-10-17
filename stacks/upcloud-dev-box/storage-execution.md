@@ -57,7 +57,7 @@ These resources must be itemized for cleanup; do not delete the source backup.
 
 ## Pending stages
 
-- B / PR #29: clone is being prepared; grow/import and completed apply still required.
+- B / PR #29: 50 GB Standard clone is online, detached and imported; adoption apply pending.
 - C / PR #30: reviewed attachment-only apply, filesystem/data/application checks.
 - D / PR #31: subsequent Simple Backup Week apply.
 - E: completed scheduled root/data backups, isolated application recovery proof,
@@ -87,5 +87,8 @@ The resize API response timed out, so its outcome was checked with GET rather
 than retrying the mutation: UpCloud confirmed 50 GB Standard, online, no server
 attachments and no individual backup rule. Original disk and stopped snapshot
 remain unchanged. Import into `upcloud_storage.data_standard` succeeded while the VM remained
-stopped. The refreshed adoption plan is being verified before PR #29 is made
-ready. No attachment change has occurred.
+stopped. The refreshed adoption plan shows only runner-local bootstrap-key creation:
+1 add, 0 change, 0 destroy, with both disks, server and bootstrap no-op.
+Independent review found no cloud-safety blockers. Final-head CI and merge
+remain the gate before the separate adoption apply. No attachment change has
+occurred.
