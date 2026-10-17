@@ -47,3 +47,32 @@ run "replacement_is_independent_unbacked_standard_storage" {
     error_message = "Use normal imported storage without per-disk backup rules or replacement-triggering clone provenance."
   }
 }
+
+override_resource {
+  target = upcloud_storage.data
+  values = {
+    id = "012ff8f3-fd54-42d5-9634-3eea56db0ca8"
+  }
+}
+override_resource {
+  target = upcloud_storage.data_standard
+  values = {
+    id = "01000000-0000-4000-8000-000000000050"
+  }
+}
+
+run "cutover_attaches_only_replacement_and_preserves_rollback_output" {
+  command = plan
+  assert {
+    condition     = length(upcloud_server.dev_box[0].storage_devices) == 1 && one(upcloud_server.dev_box[0].storage_devices).storage == upcloud_storage.data_standard.id
+    error_message = "Attach exactly the prepared replacement; never both same-label clones."
+  }
+  assert {
+    condition     = output.data_storage_id == upcloud_storage.data_standard.id && output.legacy_data_storage_id == upcloud_storage.data.id
+    error_message = "Recovery outputs must distinguish the active and detached original disk."
+  }
+  assert {
+    condition     = length(upcloud_server.dev_box[0].simple_backup) == 0
+    error_message = "Simple Backup must be a later completed apply after detaching the Flexible-backed disk."
+  }
+}

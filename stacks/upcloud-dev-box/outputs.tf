@@ -20,10 +20,15 @@ output "orchestrator_tunnel_command" {
 
 output "data_storage_id" {
   description = "UUID of the persistent /data storage"
-  value       = upcloud_storage.data.id
+  value       = upcloud_storage.data_standard.id
 }
 
 output "fqdn" {
   description = "Public DNS name of the box (null when disabled)"
   value       = one(aws_route53_record.dev_box[*].fqdn)
+}
+
+output "legacy_data_storage_id" {
+  description = "Detached original /data disk retained for rollback; do not attach alongside its clone"
+  value       = upcloud_storage.data.id
 }
