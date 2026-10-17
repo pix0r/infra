@@ -19,6 +19,12 @@ resource "upcloud_server" "dev_box" {
     address = "virtio" # /dev/vdb on first boot; mounted by label thereafter
   }
 
+  # Enabled only after the attachment-cutover apply is complete and verified.
+  simple_backup {
+    plan = "dailies"
+    time = "0900"
+  }
+
   network_interface {
     type              = "public"
     ip_address_family = "IPv4"

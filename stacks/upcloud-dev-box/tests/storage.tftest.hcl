@@ -72,7 +72,15 @@ run "cutover_attaches_only_replacement_and_preserves_rollback_output" {
     error_message = "Recovery outputs must distinguish the active and detached original disk."
   }
   assert {
-    condition     = length(upcloud_server.dev_box[0].simple_backup) == 0
-    error_message = "Simple Backup must be a later completed apply after detaching the Flexible-backed disk."
+    condition     = length(upcloud_server.dev_box[0].simple_backup) == 1 && one(upcloud_server.dev_box[0].simple_backup).plan == "dailies" && one(upcloud_server.dev_box[0].simple_backup).time == "0900"
+    error_message = "After cutover, use Simple Backup Week at 09:00 UTC."
+  }
+}
+
+run "simple_backup_has_no_attached_individual_rules" {
+  command = plan
+  assert {
+    condition     = length(upcloud_storage.data_standard.backup_rule) == 0 && length(upcloud_server.dev_box[0].template[0].backup_rule) == 0
+    error_message = "No disk attached to Simple Backup may carry an individual backup rule."
   }
 }

@@ -1,6 +1,6 @@
 # upcloud-dev-box — NixOS box on UpCloud, deployed from git
 
-One server in **San Jose** (default plan `STARTER-4xCPU-8GB`, ~USD 24/mo before storage/backups) plus a persistent 20 GB storage
+One server in **San Jose** (default plan `STARTER-4xCPU-8GB`, ~USD 24/mo before storage/backups) plus a persistent 50 GB Standard volume
 at `/data`. The OS is **NixOS, declared in `hosts/dev-box/` at the repo root**.
 
 | Layer | Owned by | Change it by |
@@ -13,7 +13,11 @@ same apply runs **nixos-anywhere** from the CI runner, which kexecs into a NixOS
 installer, partitions `/dev/vda` per `hosts/dev-box/disko.nix`, installs the flake,
 reboots. ~5 min. From then on comin polls `main` every 60 s.
 
-The server is cattle; `/data` is the pet (daily backups, 7 kept, `prevent_destroy`).
+The server is cattle; `/data` is the pet (`prevent_destroy`). Simple Backup Week
+covers the attached root and data disks daily at 09:00 UTC, retaining up to seven
+daily recovery points as the policy fills. The detached original 20 GB MaxIOPS disk remains protected for rollback
+until the scheduled-backup restore test passes; see the
+[execution record](storage-execution.md) for identifiers and the pending checkpoint.
 
 ## Storage capacity and recovery
 
